@@ -9,7 +9,7 @@ import {
   applyDecorators,
 } from "@nestjs/common";
 import type { PlatformRole } from "@betterbasket/contracts";
-import { JwksVerifier, createJwksVerifierFromEnv } from "./jwks-verifier";
+import { JwksVerifier, createJwksVerifierFromEnv } from "./jwks-verifier.js";
 
 const ROLES_KEY = "betterbasket:roles";
 

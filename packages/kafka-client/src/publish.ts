@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { Producer } from "kafkajs";
 import { EventSchemaByTopic, type TopicName } from "@betterbasket/contracts";
-import { prefixedTopic } from "./env";
+import { prefixedTopic } from "./env.js";
 
 /**
  * Publishes a validated event envelope to `topic`. Throws if `payload` doesn't

@@ -1,2 +1,2 @@
-export * from "./jwks-verifier";
-export * from "./nestjs-guard";
+export * from "./jwks-verifier.js";
+export * from "./nestjs-guard.js";

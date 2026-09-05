@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { MoneySchema } from "./common";
+import { MoneySchema } from "./common.js";
 
 export const OrderStatusSchema = z.enum([
   "pending",

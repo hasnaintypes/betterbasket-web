@@ -1,7 +1,7 @@
 import type { Consumer, Producer } from "kafkajs";
 import { EventSchemaByTopic, type TopicName } from "@betterbasket/contracts";
 import type { Logger } from "@betterbasket/logger";
-import { prefixedTopic } from "./env";
+import { prefixedTopic } from "./env.js";
 
 export interface RunConsumerOptions<T extends TopicName> {
   consumer: Consumer;

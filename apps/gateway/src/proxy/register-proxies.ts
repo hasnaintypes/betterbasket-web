@@ -34,7 +34,6 @@ export function registerProxies(app: INestApplication): void {
         ws: ws ?? false,
         on: {
           error: (err, _req, res) => {
-            // eslint-disable-next-line no-console
             console.error(`[gateway] proxy error for ${prefix} -> ${target}:`, err.message);
             if ("writeHead" in res) {
               res.writeHead(502, { "Content-Type": "application/json" });

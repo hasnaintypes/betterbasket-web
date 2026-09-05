@@ -1,3 +1,3 @@
-export * from "./money";
-export * from "./pagination";
-export * from "./slug";
+export * from "./money.js";
+export * from "./pagination.js";
+export * from "./slug.js";

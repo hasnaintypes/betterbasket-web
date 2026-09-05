@@ -1,4 +1,4 @@
-import { KafkaClient } from "./client";
+import { KafkaClient } from "./client.js";
 
 /**
  * Builds a KafkaClient from standard env vars, pointed at Redpanda Cloud

@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { MoneySchema } from "../entities/common";
-import { OrderStatusSchema } from "../entities/order";
-import { Topics } from "./topics";
+import { MoneySchema } from "../entities/common.js";
+import { OrderStatusSchema } from "../entities/order.js";
+import { Topics } from "./topics.js";
 
 /** Every event on the bus shares this envelope so consumers can log/trace/dedupe generically. */
 export const EventEnvelopeSchema = <T extends z.ZodTypeAny>(payload: T) =>

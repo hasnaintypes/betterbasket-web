@@ -1,4 +1,4 @@
-import { Kafka, logLevel, type Producer, type Consumer } from "kafkajs";
+import { Kafka, logLevel, type Producer, type Consumer, type SASLOptions } from "kafkajs";
 
 export interface KafkaClientOptions {
   clientId: string;
@@ -28,11 +28,11 @@ export class KafkaClient {
       brokers: options.brokers,
       ssl: options.ssl ?? true,
       sasl: options.sasl
-        ? {
+        ? ({
             mechanism: options.sasl.mechanism ?? "scram-sha-256",
             username: options.sasl.username,
             password: options.sasl.password,
-          }
+          } as SASLOptions)
         : undefined,
       logLevel: logLevel.WARN,
       retry: { retries: 8, initialRetryTime: 300 },

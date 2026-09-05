@@ -1,6 +1,7 @@
 {
   "extends": "@betterbasket/config/typescript/nestjs.json",
   "compilerOptions": {
+    "outDir": "./dist",
     "rootDir": "./src"
   },
   "include": [

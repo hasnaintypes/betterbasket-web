@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { PlatformRoleSchema } from "./common";
+import { PlatformRoleSchema } from "./common.js";
 
 /** Mirrors the subset of Better Auth's `user` table fields shared across services via JWT claims. */
 export const UserSchema = z.object({

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { OrgRoleSchema } from "./common";
+import { OrgRoleSchema } from "./common.js";
 
 export const SellerOnboardingStatusSchema = z.enum([
   "pending",

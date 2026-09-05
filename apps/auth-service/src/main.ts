@@ -2,7 +2,9 @@ import "reflect-metadata";
 import { NestFactory } from "@nestjs/core";
 import { ValidationPipe } from "@nestjs/common";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
+import type { Express } from "express";
 import { AppModule } from "./app.module";
+import { createAuth } from "./auth/auth.config";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -11,6 +13,14 @@ async function bootstrap() {
   });
 
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+
+  // `better-auth` is ESM-only; this service is CommonJS, so both the auth
+  // instance and its Express handler are loaded via dynamic import() (see
+  // the comment in auth.config.ts for why).
+  const auth = await createAuth();
+  const { toNodeHandler } = await import("better-auth/node");
+  const expressApp = app.getHttpAdapter().getInstance() as Express;
+  expressApp.all("/api/auth/*", toNodeHandler(auth));
 
   const config = new DocumentBuilder()
     .setTitle("BetterBasket Auth Service")
