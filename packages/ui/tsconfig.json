@@ -1,0 +1,7 @@
+{
+  "extends": "@betterbasket/config/typescript/nextjs.json",
+  "compilerOptions": {
+    "jsx": "react-jsx"
+  },
+  "include": ["src"]
+}
