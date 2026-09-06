@@ -1,12 +1,10 @@
 import { Injectable } from "@nestjs/common";
-import ImageKit from "imagekit";
+import ImageKit from "@imagekit/nodejs";
 
 @Injectable()
 export class MediaService {
   private readonly imagekit = new ImageKit({
-    publicKey: process.env.IMAGEKIT_PUBLIC_KEY ?? "",
     privateKey: process.env.IMAGEKIT_PRIVATE_KEY ?? "",
-    urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT ?? "",
   });
 
   /**
@@ -15,7 +13,7 @@ export class MediaService {
    * with the `imagekitio-react`/`@imagekit/next` upload helper.
    */
   getUploadAuthParams() {
-    const { token, expire, signature } = this.imagekit.getAuthenticationParameters();
+    const { token, expire, signature } = this.imagekit.helper.getAuthenticationParameters();
     return {
       token,
       expire,
