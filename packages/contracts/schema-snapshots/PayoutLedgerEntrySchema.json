@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "createdAt": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "grossAmount": {
+      "properties": {
+        "amount": {
+          "maximum": 9007199254740991,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "currency": {
+          "default": "USD",
+          "maxLength": 3,
+          "minLength": 3,
+          "type": "string"
+        }
+      },
+      "required": [
+        "amount"
+      ],
+      "type": "object"
+    },
+    "id": {
+      "type": "string"
+    },
+    "netAmount": {
+      "properties": {
+        "amount": {
+          "maximum": 9007199254740991,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "currency": {
+          "default": "USD",
+          "maxLength": 3,
+          "minLength": 3,
+          "type": "string"
+        }
+      },
+      "required": [
+        "amount"
+      ],
+      "type": "object"
+    },
+    "paymentId": {
+      "type": "string"
+    },
+    "platformFee": {
+      "properties": {
+        "amount": {
+          "maximum": 9007199254740991,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "currency": {
+          "default": "USD",
+          "maxLength": 3,
+          "minLength": 3,
+          "type": "string"
+        }
+      },
+      "required": [
+        "amount"
+      ],
+      "type": "object"
+    },
+    "sellerId": {
+      "type": "string"
+    },
+    "stripeAccountId": {
+      "type": "string"
+    },
+    "stripeTransferId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "createdAt",
+    "grossAmount",
+    "id",
+    "netAmount",
+    "paymentId",
+    "platformFee",
+    "sellerId",
+    "stripeAccountId"
+  ],
+  "type": "object"
+}

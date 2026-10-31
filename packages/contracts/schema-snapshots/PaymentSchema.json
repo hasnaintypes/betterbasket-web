@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "amount": {
+      "properties": {
+        "amount": {
+          "maximum": 9007199254740991,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "currency": {
+          "default": "USD",
+          "maxLength": 3,
+          "minLength": 3,
+          "type": "string"
+        }
+      },
+      "required": [
+        "amount"
+      ],
+      "type": "object"
+    },
+    "createdAt": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "id": {
+      "type": "string"
+    },
+    "orderId": {
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "failed",
+        "processing",
+        "refunded",
+        "requires_payment",
+        "succeeded"
+      ],
+      "type": "string"
+    },
+    "stripePaymentIntentId": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "amount",
+    "createdAt",
+    "id",
+    "orderId",
+    "status",
+    "stripePaymentIntentId"
+  ],
+  "type": "object"
+}

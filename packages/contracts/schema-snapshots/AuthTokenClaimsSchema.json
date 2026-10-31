@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "activeOrganizationId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "aud": {
+      "type": "string"
+    },
+    "email": {
+      "format": "email",
+      "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$",
+      "type": "string"
+    },
+    "exp": {
+      "type": "number"
+    },
+    "iat": {
+      "type": "number"
+    },
+    "iss": {
+      "type": "string"
+    },
+    "role": {
+      "enum": [
+        "admin",
+        "customer",
+        "seller"
+      ],
+      "type": "string"
+    },
+    "sub": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "aud",
+    "email",
+    "exp",
+    "iat",
+    "iss",
+    "role",
+    "sub"
+  ],
+  "type": "object"
+}
