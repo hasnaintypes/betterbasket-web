@@ -5,3 +5,4 @@
 - Do not add Claude or AI co-author or attribution lines to commits, pull requests, or files.
 - Never stage files in the private `docs` directory.
 - Never force-push.
+- Run lint, type-check, tests, build, formatting, and repository checks as background jobs; keep their logs and wait for exit codes before committing or opening a pull request.
