@@ -1,0 +1,5 @@
+# Code owners. Reviews are requested automatically for sensitive areas.
+/.github/                 @hasnaintypes
+/packages/contracts/       @hasnaintypes
+/apps/payment-service/     @hasnaintypes
+/apps/auth-service/        @hasnaintypes
