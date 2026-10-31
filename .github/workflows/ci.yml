@@ -66,6 +66,25 @@ jobs:
             pnpm turbo run lint type-check test build
           fi
 
+  # Repository hygiene checks. Non-gating at first (not part of ci-gate); promote once stable.
+  markdown:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Markdown links and anchors (tracked files)
+        run: pnpm check:md-links
+      - name: Script tests
+        run: pnpm test:scripts
+      - name: Formatting
+        run: pnpm format:check
+
   # The only check that branch protection should require. It cannot be skipped: it always runs and
   # fails unless every job it depends on actually succeeded (a failed, cancelled or skipped job fails the gate).
   ci-gate:

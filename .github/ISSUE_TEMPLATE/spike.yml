@@ -1,0 +1,16 @@
+name: Spike
+description: A time-boxed investigation that produces evidence and a decision
+labels: ["type:spike"]
+body:
+  - type: textarea
+    id: question
+    attributes: { label: Question to answer }
+    validations: { required: true }
+  - type: textarea
+    id: method
+    attributes: { label: Method, description: Resources used (free tier / trial only unless a cost proposal is approved) and cleanup plan }
+    validations: { required: true }
+  - type: textarea
+    id: output
+    attributes: { label: Expected output and decision criteria }
+    validations: { required: true }
