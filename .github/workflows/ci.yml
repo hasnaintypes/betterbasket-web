@@ -26,7 +26,7 @@ jobs:
         with:
           fetch-depth: 0 # needed for the affected-package filter and the base diff
 
-      - name: Guard - no tracked file references the private docs/ directory
+      - name: Guard - no tracked file references the private documentation directory
         run: sh scripts/check-no-private-docs.sh
 
       - name: Self-test the change-detection script
