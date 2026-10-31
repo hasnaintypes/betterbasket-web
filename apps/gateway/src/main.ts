@@ -15,7 +15,7 @@ async function bootstrap() {
     .setDescription(
       "Single entry point for web/seller-portal/admin-portal. Routes /api/<service>/** " +
         "to the matching downstream service. Each service publishes its own OpenAPI spec " +
-        "at <service>/docs — see docs/api/ for the aggregated portal.",
+        "at <service>/docs.",
     )
     .setVersion("0.1.0")
     .addBearerAuth()

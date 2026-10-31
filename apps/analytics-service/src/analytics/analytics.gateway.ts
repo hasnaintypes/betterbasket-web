@@ -7,7 +7,7 @@ import type { Server } from "socket.io";
  * for their own store; admins join `org:*`/`platform` for aggregate feeds.
  *
  * NOTE (Tier 4): connection auth (verifying the JWT on the socket handshake)
- * isn't wired yet — see docs/PRD.md Tier 4 for the join-room + auth handshake.
+ * isn't wired yet; joining rooms must be assigned server-side after verifying the token.
  */
 @WebSocketGateway({ cors: { origin: "*" }, namespace: "/realtime" })
 export class AnalyticsGateway {
