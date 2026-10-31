@@ -33,7 +33,7 @@ export class ProductsController {
     @Body(new ZodValidationPipe(CreateProductInputSchema)) body: CreateProductInput,
   ) {
     // `sub` is the seller's user id; `activeOrganizationId` ties the product to their store.
-    // seller-service resolves organizationId -> Seller.id (see docs/architecture.md).
+    // seller-service resolves organizationId -> Seller.id.
     return this.productsService.create(req.user.sub, req.user.activeOrganizationId ?? "", body);
   }
 }

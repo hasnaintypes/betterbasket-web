@@ -14,7 +14,7 @@ export class OrdersService {
    */
   async create(_buyerId: string, _input: CreateOrderInput): Promise<never> {
     throw new NotImplementedException(
-      "Order creation needs product-service price resolution — tracked in docs/PRD.md Tier 2.",
+      "Order creation is not implemented yet: it needs product-service price resolution.",
     );
   }
 

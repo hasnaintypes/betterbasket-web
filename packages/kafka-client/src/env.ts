@@ -10,7 +10,8 @@ export function createKafkaClientFromEnv(clientId: string): KafkaClient {
   if (brokers.length === 0) {
     throw new Error(
       "KAFKA_BROKERS is not set — copy the bootstrap server from your Redpanda Cloud cluster " +
-        "into .env.development / .env.production (see docs/infra-setup.md).",
+        "into .env.development / .env.production (see the service's .env.*.example); " +
+        "KAFKA_USERNAME and KAFKA_PASSWORD are also required for SASL authentication.",
     );
   }
 
