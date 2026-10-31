@@ -1,1 +1,11 @@
-{ "waivers": [] }
+{
+  "waivers":
+    [
+      {
+        "id": "DEMO-EXPIRED",
+        "reason": "Synthetic CI test",
+        "owner": "hasnaintypes",
+        "expires": "2020-01-01",
+      },
+    ],
+}
