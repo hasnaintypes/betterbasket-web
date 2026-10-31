@@ -123,6 +123,7 @@ come; see the open GitHub issues and milestones for the plan, and the
 
 1. Pick up an open GitHub issue (each issue lists its dependencies, acceptance criteria and tests).
 2. `pnpm turbo lint type-check test --filter=<app-you-changed>` before opening a PR.
+   CI runs the same tasks; the single required status check is **`ci-gate`** (it fails unless every CI job succeeded, and pull requests that change root or CI configuration run the full task graph instead of only the affected packages).
 3. Describe in the PR which requirements and tests are covered and any architectural impact; raise a `blocked:decision` question instead of making unplanned architectural decisions.
 
 ## License
