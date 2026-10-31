@@ -125,6 +125,12 @@ come; see the open GitHub issues and milestones for the plan, and the
    CI runs the same tasks; the single required status check is **`ci-gate`** (it fails unless every CI job succeeded, and pull requests that change root or CI configuration run the full task graph instead of only the affected packages).
 3. Describe in the PR which requirements and tests are covered and any architectural impact; raise a `blocked:decision` question instead of making unplanned architectural decisions.
 
+## Security
+
+Report suspected vulnerabilities privately through the repository's GitHub security advisory form. Do not include secrets or exploit details in public issues.
+
+The `Security` workflow checks production dependencies, dependency changes, commit history for secrets, and JavaScript/TypeScript with CodeQL. Its aggregate `security-gate` check should be required for pull requests. A high or critical finding blocks the gate unless its identifier has an active entry in `.github/security-waivers.yml` with a reason, owner, and ISO expiry date. The file uses JSON syntax (which is also valid YAML). Expired waivers fail the gate and must be reviewed or removed. Secret findings always block the gate and require removing and rotating the affected credential.
+
 ## License
 
 MIT.
