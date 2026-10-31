@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Validates relative links and #anchors in git-tracked Markdown files. Exits 1 on problems.
-// Usage: node scripts/check-md-links.mjs [--root <dir>]   (uses `git ls-files` when --root is not given)
+// Usage: node .github/scripts/check-md-links.mjs [--root <dir>]   (uses `git ls-files` when --root is not given)
 import { readFileSync, existsSync, statSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { dirname, join, normalize, resolve } from "node:path";

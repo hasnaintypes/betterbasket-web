@@ -7,7 +7,7 @@
     "target": "ES2022",
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "incremental": true,
+    "incremental": false,
     "declaration": false,
     "declarationMap": false
   }
