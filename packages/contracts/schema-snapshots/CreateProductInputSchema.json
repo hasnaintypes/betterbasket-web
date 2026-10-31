@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "basePrice": {
+      "properties": {
+        "amount": {
+          "maximum": 9007199254740991,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "currency": {
+          "default": "USD",
+          "maxLength": 3,
+          "minLength": 3,
+          "type": "string"
+        }
+      },
+      "required": [
+        "amount"
+      ],
+      "type": "object"
+    },
+    "category": {
+      "type": "string"
+    },
+    "description": {
+      "default": "",
+      "maxLength": 5000,
+      "type": "string"
+    },
+    "images": {
+      "default": [],
+      "items": {
+        "format": "uri",
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "title": {
+      "maxLength": 200,
+      "minLength": 2,
+      "type": "string"
+    },
+    "variants": {
+      "default": [],
+      "items": {
+        "properties": {
+          "options": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "default": {},
+            "propertyNames": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "price": {
+            "properties": {
+              "amount": {
+                "maximum": 9007199254740991,
+                "minimum": 0,
+                "type": "integer"
+              },
+              "currency": {
+                "default": "USD",
+                "maxLength": 3,
+                "minLength": 3,
+                "type": "string"
+              }
+            },
+            "required": [
+              "amount"
+            ],
+            "type": "object"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "stock": {
+            "maximum": 9007199254740991,
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "price",
+          "sku",
+          "stock"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "basePrice",
+    "category",
+    "title"
+  ],
+  "type": "object"
+}

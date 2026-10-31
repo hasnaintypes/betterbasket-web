@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "enum": [
+    "failed",
+    "processing",
+    "refunded",
+    "requires_payment",
+    "succeeded"
+  ],
+  "type": "string"
+}

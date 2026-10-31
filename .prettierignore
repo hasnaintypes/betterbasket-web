@@ -7,3 +7,4 @@ coverage
 pnpm-lock.yaml
 **/next-env.d.ts
 docs
+packages/contracts/schema-snapshots/*.json

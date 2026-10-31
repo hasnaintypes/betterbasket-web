@@ -1,0 +1,141 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "basePrice": {
+      "properties": {
+        "amount": {
+          "maximum": 9007199254740991,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "currency": {
+          "default": "USD",
+          "maxLength": 3,
+          "minLength": 3,
+          "type": "string"
+        }
+      },
+      "required": [
+        "amount"
+      ],
+      "type": "object"
+    },
+    "category": {
+      "type": "string"
+    },
+    "createdAt": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "description": {
+      "default": "",
+      "maxLength": 5000,
+      "type": "string"
+    },
+    "id": {
+      "type": "string"
+    },
+    "images": {
+      "default": [],
+      "items": {
+        "format": "uri",
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "organizationId": {
+      "type": "string"
+    },
+    "sellerId": {
+      "type": "string"
+    },
+    "slug": {
+      "type": "string"
+    },
+    "status": {
+      "default": "draft",
+      "enum": [
+        "active",
+        "archived",
+        "draft"
+      ],
+      "type": "string"
+    },
+    "title": {
+      "maxLength": 200,
+      "minLength": 2,
+      "type": "string"
+    },
+    "updatedAt": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "variants": {
+      "default": [],
+      "items": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "options": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "default": {},
+            "propertyNames": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "price": {
+            "properties": {
+              "amount": {
+                "maximum": 9007199254740991,
+                "minimum": 0,
+                "type": "integer"
+              },
+              "currency": {
+                "default": "USD",
+                "maxLength": 3,
+                "minLength": 3,
+                "type": "string"
+              }
+            },
+            "required": [
+              "amount"
+            ],
+            "type": "object"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "stock": {
+            "maximum": 9007199254740991,
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "price",
+          "sku",
+          "stock"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "basePrice",
+    "category",
+    "createdAt",
+    "id",
+    "organizationId",
+    "sellerId",
+    "slug",
+    "title",
+    "updatedAt"
+  ],
+  "type": "object"
+}

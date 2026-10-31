@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "id": {
+      "format": "uuid",
+      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+      "type": "string"
+    },
+    "occurredAt": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "payload": {
+      "properties": {
+        "buyerId": {
+          "type": "string"
+        },
+        "orderId": {
+          "type": "string"
+        },
+        "sellerIds": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "total": {
+          "properties": {
+            "amount": {
+              "maximum": 9007199254740991,
+              "minimum": 0,
+              "type": "integer"
+            },
+            "currency": {
+              "default": "USD",
+              "maxLength": 3,
+              "minLength": 3,
+              "type": "string"
+            }
+          },
+          "required": [
+            "amount"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "buyerId",
+        "orderId",
+        "sellerIds",
+        "total"
+      ],
+      "type": "object"
+    },
+    "producer": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "occurredAt",
+    "payload",
+    "producer"
+  ],
+  "type": "object"
+}
