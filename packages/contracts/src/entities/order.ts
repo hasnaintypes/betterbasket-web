@@ -39,12 +39,14 @@ export const OrderSchema = z.object({
 export type Order = z.infer<typeof OrderSchema>;
 
 export const CreateOrderInputSchema = z.object({
-  items: z.array(
-    z.object({
-      productId: z.string(),
-      variantId: z.string().nullish(),
-      quantity: z.number().int().positive(),
-    }),
-  ).min(1),
+  items: z
+    .array(
+      z.object({
+        productId: z.string(),
+        variantId: z.string().nullish(),
+        quantity: z.number().int().positive(),
+      }),
+    )
+    .min(1),
 });
 export type CreateOrderInput = z.infer<typeof CreateOrderInputSchema>;

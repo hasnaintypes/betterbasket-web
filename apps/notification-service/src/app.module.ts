@@ -5,10 +5,13 @@ import { AppService } from "./app.service";
 import { NotificationsModule } from "./notifications/notifications.module";
 
 @Module({
-  imports: [ConfigModule.forRoot({
+  imports: [
+    ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: [`.env.${process.env.NODE_ENV ?? "development"}`, ".env"],
-    }), NotificationsModule],
+    }),
+    NotificationsModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

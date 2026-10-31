@@ -12,7 +12,12 @@ export class PaymentsService {
   private readonly stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? "sk_test_placeholder");
 
   /** One PaymentIntent per (order, seller) sub-order — see db/schema.ts comment. */
-  async createPaymentIntent(orderId: string, amount: number, currency: string, connectedAccountId: string) {
+  async createPaymentIntent(
+    orderId: string,
+    amount: number,
+    currency: string,
+    connectedAccountId: string,
+  ) {
     const applicationFeeAmount = Math.round((amount * PLATFORM_FEE_BPS) / 10_000);
 
     const intent = await this.stripe.paymentIntents.create({
@@ -55,10 +60,7 @@ export class PaymentsService {
           ? "failed"
           : "processing";
 
-    await db
-      .update(payments)
-      .set({ status })
-      .where(eq(payments.stripePaymentIntentId, intent.id));
+    await db.update(payments).set({ status }).where(eq(payments.stripePaymentIntentId, intent.id));
 
     this.logger.log(`Payment ${intent.id} -> ${status}`);
     // TODO(Tier 3): publish Topics.PaymentSucceeded / Topics.PaymentFailed so

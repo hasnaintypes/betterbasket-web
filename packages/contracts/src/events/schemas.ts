@@ -29,11 +29,20 @@ export const ProductStockChangedEventSchema = EventEnvelopeSchema(
 );
 
 export const OrderCreatedEventSchema = EventEnvelopeSchema(
-  z.object({ orderId: z.string(), buyerId: z.string(), total: MoneySchema, sellerIds: z.array(z.string()) }),
+  z.object({
+    orderId: z.string(),
+    buyerId: z.string(),
+    total: MoneySchema,
+    sellerIds: z.array(z.string()),
+  }),
 );
 
 export const OrderStatusChangedEventSchema = EventEnvelopeSchema(
-  z.object({ orderId: z.string(), previousStatus: OrderStatusSchema, newStatus: OrderStatusSchema }),
+  z.object({
+    orderId: z.string(),
+    previousStatus: OrderStatusSchema,
+    newStatus: OrderStatusSchema,
+  }),
 );
 
 export const PaymentSucceededEventSchema = EventEnvelopeSchema(

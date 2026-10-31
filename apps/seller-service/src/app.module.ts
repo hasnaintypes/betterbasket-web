@@ -5,10 +5,13 @@ import { AppService } from "./app.service";
 import { SellersModule } from "./sellers/sellers.module";
 
 @Module({
-  imports: [ConfigModule.forRoot({
+  imports: [
+    ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: [`.env.${process.env.NODE_ENV ?? "development"}`, ".env"],
-    }), SellersModule],
+    }),
+    SellersModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
