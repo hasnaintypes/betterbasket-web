@@ -4,18 +4,49 @@ on:
   pull_request:
   push:
     branches: [main]
+  schedule:
+    - cron: "17 3 * * *" # nightly full run
 
+# Cancel superseded pull-request runs only; never cancel runs on main, tags or the nightly schedule.
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
 
 jobs:
-  ci:
+  # Decides whether the whole task graph must run (root/CI/config changes, unresolvable base) or only affected packages.
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      run_all: ${{ steps.decide.outputs.run_all }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # needed for the affected-package filter and the base diff
+
+      - name: Self-test the change-detection script
+        run: sh .github/scripts/test-changed-paths.sh
+
+      - name: Decide full vs affected-only run
+        id: decide
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            result=$(sh .github/scripts/changed-paths.sh "origin/${{ github.base_ref }}" HEAD)
+          else
+            result="RUN_ALL=true" # main, tags and the nightly schedule always run everything
+          fi
+          echo "$result"
+          echo "run_all=${result#RUN_ALL=}" >> "$GITHUB_OUTPUT"
+
+  verify:
+    needs: changes
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # needed for turbo's --filter=...[origin/main]
+          fetch-depth: 0
 
       - uses: pnpm/action-setup@v4 # version comes from package.json's "packageManager" field
 
@@ -27,10 +58,26 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Lint, type-check, test, build (affected only on PRs)
+      - name: Lint, type-check, test, build
         run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
+          if [ "${{ github.event_name }}" = "pull_request" ] && [ "${{ needs.changes.outputs.run_all }}" != "true" ]; then
             pnpm turbo run lint type-check test build --filter="...[origin/${{ github.base_ref }}]"
           else
             pnpm turbo run lint type-check test build
+          fi
+
+  # The only check that branch protection should require. It cannot be skipped: it always runs and
+  # fails unless every job it depends on actually succeeded (a failed, cancelled or skipped job fails the gate).
+  ci-gate:
+    needs: [changes, verify]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Evaluate required jobs
+        run: |
+          echo "changes: ${{ needs.changes.result }}"
+          echo "verify:  ${{ needs.verify.result }}"
+          if [ "${{ needs.changes.result }}" != "success" ] || [ "${{ needs.verify.result }}" != "success" ]; then
+            echo "::error::A required job did not succeed (failed, cancelled or skipped)."
+            exit 1
           fi
