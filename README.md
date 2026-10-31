@@ -5,9 +5,8 @@
 > event-driven via Kafka, with cross-service auth via JWT/JWKS.
 > Maintained by [@hasnaintypes](https://github.com/hasnaintypes).
 
-See **[`docs/PRD.md`](docs/PRD.md)** for the phased roadmap,
-**[`docs/architecture.md`](docs/architecture.md)** for how it all fits
-together, and **[`docs/adr/`](docs/adr/)** for why specific choices were made.
+Planning and design documentation is maintained privately by the maintainer.
+Planned work is tracked in this repository's GitHub milestones and issues.
 
 ## What this is
 
@@ -42,7 +41,6 @@ betterbasket-ecommerce/
 │   ├── auth-shared/      # JWKS verification guard + Better Auth client helpers
 │   ├── logger/           # Pino structured logger preset
 │   └── utils/            # money/pagination/slug helpers
-├── docs/                 # PRD, architecture, ADRs, API doc index
 ├── infra/                # deployment manifests only (no local Docker — see below)
 └── .github/workflows/    # CI
 ```
@@ -62,22 +60,25 @@ betterbasket-ecommerce/
 | Media | ImageKit (signed direct browser uploads) |
 | Real-time | Socket.IO (`analytics-service`) for live seller/admin dashboards |
 | Validation | Zod schemas shared via `@betterbasket/contracts` (not class-validator) |
-| API docs | `@nestjs/swagger` per service at `/docs` — see `docs/api/` |
-| Testing | Jest + Supertest (services), Playwright (frontends), Testcontainers for real-DB integration tests |
-| Deployment | Vercel (3 separate projects, one per frontend) + Railway/Render (one service per backend) — see ADR 0005 |
+| API docs | `@nestjs/swagger` per service at `/docs` |
+| Testing | Jest + Supertest (services), Playwright (frontends), isolated cloud test databases for integration tests (no Testcontainers) |
+| Deployment | Vercel (3 separate projects, one per frontend) + Render (one service per backend) *(target; no deployment configuration exists in the repository yet)* |
 
 ## Local development — no Docker required
 
-Every datastore/broker is a real cloud service (free tiers), not a local
-container — see **[`docs/infra-setup.md`](docs/infra-setup.md)** for account
-setup on Neon, MongoDB Atlas, Upstash, Redpanda Cloud, Stripe, and ImageKit.
+Every datastore/broker is a real cloud service (free tiers for development),
+not a local container. You need accounts on Neon (Postgres), MongoDB Atlas,
+Upstash (Redis), Redpanda Cloud (Kafka API), Stripe (test mode) and ImageKit;
+each service's `.env.development.example` lists exactly which connection
+strings and keys to fill in. Use separate projects/credentials per developer
+and never commit real `.env.*` files (they are git-ignored).
 
 ```bash
 pnpm install
 
 # Fill in each service's env — copy the example, then paste real dev credentials
 cp apps/auth-service/.env.development.example apps/auth-service/.env.development
-# ...repeat for every service/app you're running (see docs/infra-setup.md)
+# ...repeat for every service/app you're running (see each .env.*.example)
 
 # Generate + apply the Better Auth schema (Postgres, via Neon)
 pnpm --filter auth-service auth:generate-schema
@@ -94,10 +95,10 @@ payment 4005, notification 4006, media 4007, analytics 4008; frontends on
 
 ## Environments
 
-Dev and prod are the *same* providers, different projects/branches — NestJS
-services load `.env.${NODE_ENV}` (see `apps/*/src/app.module.ts`), Next.js
-apps use its built-in `.env.development`/`.env.production` convention. No
-`docker-compose` file — see [ADR 0004](docs/adr/0004-cloud-managed-infra-no-docker.md).
+Environments use the same providers with separate projects and credentials —
+NestJS services load `.env.${NODE_ENV}` (see `apps/*/src/app.module.ts`),
+Next.js apps use its built-in `.env.development`/`.env.production` convention.
+There is no `docker-compose` file: Docker is not required for local development.
 
 ## Deployment
 
@@ -106,25 +107,23 @@ repo:
 
 - `web`, `seller-portal`, `admin-portal` → 3 separate Vercel projects (same
   repo, different Root Directory).
-- Every backend service → its own Railway/Render service, built from its
-  `apps/<service>/Dockerfile`.
+- Every backend service → its own Render service (deployment configuration is not yet in the repository).
 - CI (`.github/workflows/ci.yml`) uses Turborepo's affected-package
   filtering so a change to one service doesn't rebuild the other eleven.
 
-See [ADR 0005](docs/adr/0005-deployment-targets.md) for the full reasoning.
 
 ## Status
 
-Tier 0 (foundation — this scaffold) is done. See
-**[`docs/PRD.md`](docs/PRD.md)** for what's implemented vs. still a
-`TODO(Tier N)` in the code, and what's coming in Tiers 1–5.
+Tier 0 (the foundation scaffold) is done: the monorepo builds, services boot
+with health checks, and the shared packages exist. Feature work is still to
+come; see the open GitHub issues and milestones for the plan, and the
+`TODO(Tier N)` markers in the code for unfinished logic.
 
 ## Contributing
 
-1. Pick up a `TODO(Tier N)` from `docs/PRD.md`'s current tier.
+1. Pick up an open GitHub issue (each issue lists its dependencies, acceptance criteria and tests).
 2. `pnpm turbo lint type-check test --filter=<app-you-changed>` before opening a PR.
-3. Update `docs/PRD.md`'s "Current status" section and add an ADR under
-   `docs/adr/` for any decision that isn't just "implement what's already planned."
+3. Describe in the PR which requirements and tests are covered and any architectural impact; raise a `blocked:decision` question instead of making unplanned architectural decisions.
 
 ## License
 

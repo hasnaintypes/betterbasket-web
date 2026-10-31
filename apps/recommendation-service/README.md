@@ -1,9 +1,9 @@
 # recommendation-service (Tier 5 — not built yet)
 
-Deferred per `docs/PRD.md` Tier 5. When this tier starts:
+Deferred (not scheduled). When this tier starts:
 
 - **Stack:** FastAPI + TensorFlow (Python). Deliberately outside
-  Turborepo's JS task graph (see ADR 0001) — this folder will get its own
+  Turborepo's JS task graph — this folder will get its own
   `pyproject.toml`/`uv.lock` and Dockerfile, invoked directly in CI rather
   than through `turbo run`.
 - **Input:** consumes a `user.viewed-product.v1`-style Kafka event stream
@@ -13,4 +13,4 @@ Deferred per `docs/PRD.md` Tier 5. When this tier starts:
 - **Output:** a `GET /recommendations/:userId` endpoint the gateway proxies
   to, consumed by `web`'s "recommended for you" section.
 
-Do not add code here until Tier 1–4 are solid — see `docs/PRD.md`.
+Do not add code here until the core marketplace tiers (1–4) are solid.

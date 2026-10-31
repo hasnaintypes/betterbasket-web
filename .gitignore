@@ -36,3 +36,11 @@ __pycache__/
 *.pyc
 .venv/
 venv/
+
+# Private planning / design documentation: kept on the maintainer machine only, never pushed.
+# NOTE: files already tracked (see docs/roadmap/local-docs-tracking-plan.md) stay tracked until
+# "git rm -r --cached docs/" is run with approval; this rule only affects untracked files.
+docs/
+
+# Local archive snapshots of the private docs (never push)
+/docs*.zip

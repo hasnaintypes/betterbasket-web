@@ -1,15 +1,15 @@
 # infra/
 
-This folder holds **deployment** config only — Railway/Render service
-manifests, and anything else needed to ship a built container. It does
+This folder holds **deployment** config only — Render Blueprint and Vercel project
+configuration (planned), and anything else needed to ship a built container. It does
 **not** contain local dev infrastructure.
 
 ## Local development uses real cloud services, not Docker
 
 Every datastore/broker is a managed, free-tier cloud service reachable
 directly from your machine. Dev and prod are simply different
-projects/clusters on the same providers — see [`docs/infra-setup.md`](../docs/infra-setup.md)
-for account setup and where each connection string goes.
+projects/clusters on the same providers. Each app's `.env.*.example` files
+list where each connection string and key goes.
 
 | Concern | Provider | Why |
 |---|---|---|
@@ -25,6 +25,6 @@ dashboards.
 ## What's actually in this folder
 
 - `apps/<service>/Dockerfile` (colocated with each service) — used by CI to
-  build the image that Railway/Render deploys. This is the one legitimate
+  build a deployable image if Docker is chosen on Render. This is the one legitimate
   use of Docker in this project: build-time, not local dev.
-- Railway/Render service manifests (added as each service is deployed).
+- Render Blueprint (`render.yaml`) and Vercel configuration: **not yet created**, planned in the roadmap.
