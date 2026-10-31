@@ -1,0 +1,109 @@
+name: Security
+
+on:
+  pull_request:
+  schedule:
+    - cron: "23 4 * * 1" # weekly scan of the default branch
+
+permissions:
+  contents: read
+
+jobs:
+  waivers:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Validate security waivers
+        run: node .github/scripts/check-waivers.mjs validate
+
+  audit:
+    needs: waivers
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Audit production dependencies with retry on API errors
+        run: |
+          for attempt in 1 2 3; do
+            pnpm audit --audit-level=high --prod --json > "$RUNNER_TEMP/audit.json" 2> "$RUNNER_TEMP/audit.err" || true
+            if node -e 'const fs = require("fs"); const data = JSON.parse(fs.readFileSync(process.argv[1], "utf8")); if (!data.metadata || !data.advisories) process.exit(1)' "$RUNNER_TEMP/audit.json"; then
+              node .github/scripts/check-waivers.mjs audit "$RUNNER_TEMP/audit.json"
+              exit $?
+            fi
+            echo "::warning::Audit API attempt $attempt failed"
+            sleep $((attempt * 5))
+          done
+          echo "::error::Production dependency audit failed after 3 attempts"
+          exit 1
+
+  dependency-review:
+    needs: waivers
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Review changed dependencies
+        if: github.event_name == 'pull_request'
+        id: review
+        uses: actions/dependency-review-action@v5
+        with:
+          fail-on-severity: high
+          warn-only: true
+          license-check: false
+      - name: Check review findings against active waivers
+        if: github.event_name == 'pull_request'
+        env:
+          VULNERABLE_CHANGES: ${{ steps.review.outputs.vulnerable-changes }}
+        run: |
+          printf '%s' "${VULNERABLE_CHANGES:-[]}" > "$RUNNER_TEMP/dependency-review.json"
+          node .github/scripts/check-waivers.mjs dependency-review "$RUNNER_TEMP/dependency-review.json"
+
+  secret-scan:
+    needs: waivers
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Scan commit history for secrets
+        uses: gitleaks/gitleaks-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_CONFIG: .gitleaks.toml
+
+  codeql:
+    needs: waivers
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v6
+      - uses: github/codeql-action/init@v4
+        with:
+          languages: javascript-typescript
+      - name: Analyze JavaScript and TypeScript
+        id: analyze
+        uses: github/codeql-action/analyze@v4
+      - name: Check high severity CodeQL findings
+        env:
+          SARIF_DIR: ${{ steps.analyze.outputs.sarif-output }}
+        run: node .github/scripts/check-waivers.mjs codeql "$SARIF_DIR"
+
+  security-gate:
+    needs: [waivers, audit, dependency-review, secret-scan, codeql]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require every security job to pass
+        run: |
+          for result in "${{ needs.waivers.result }}" "${{ needs.audit.result }}" "${{ needs.dependency-review.result }}" "${{ needs.secret-scan.result }}" "${{ needs.codeql.result }}"; do
+            if [ "$result" != success ]; then
+              echo "::error::A security job failed, was cancelled, or was skipped"
+              exit 1
+            fi
+          done

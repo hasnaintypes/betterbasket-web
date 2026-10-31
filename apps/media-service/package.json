@@ -13,34 +13,34 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@betterbasket/auth-shared": "workspace:*",
+    "@betterbasket/logger": "workspace:*",
+    "@imagekit/nodejs": "^7.11.0",
     "@nestjs/common": "^11.2.3",
-    "@nestjs/core": "^11.2.3",
-    "@nestjs/platform-express": "^11.2.3",
     "@nestjs/config": "^4.0.4",
+    "@nestjs/core": "^11.2.3",
+    "@nestjs/platform-express": "^11.2.8",
     "@nestjs/swagger": "^11.4.7",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.1",
-    "@imagekit/nodejs": "^7.11.0",
-    "@betterbasket/auth-shared": "workspace:*",
-    "@betterbasket/logger": "workspace:*"
+    "rxjs": "^7.8.1"
   },
   "devDependencies": {
+    "@betterbasket/config": "workspace:*",
     "@nestjs/cli": "^11.0.24",
     "@nestjs/testing": "^11.2.3",
-    "@types/jest": "^30.0.0",
-    "@betterbasket/config": "workspace:*",
     "@types/express": "^5.0.0",
+    "@types/jest": "^30.0.0",
     "@types/node": "^22.7.4",
     "@types/supertest": "^6.0.2",
+    "eslint": "^10.10.0",
     "jest": "^30.5.1",
+    "supertest": "^7.0.0",
     "ts-jest": "^29.4.12",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
-    "supertest": "^7.0.0",
-    "typescript": "^5.6.3",
-    "eslint": "^10.10.0"
+    "typescript": "^5.6.3"
   },
   "jest": {
     "preset": "ts-jest",
