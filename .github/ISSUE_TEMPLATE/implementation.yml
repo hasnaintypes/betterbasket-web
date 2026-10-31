@@ -1,0 +1,58 @@
+name: Implementation task
+description: A scoped, implementable unit of work (feature, chore, test)
+labels: []
+body:
+  - type: textarea
+    id: summary
+    attributes: { label: Summary and why, description: What is built and why it is needed }
+    validations: { required: true }
+  - type: textarea
+    id: current
+    attributes: { label: Current state, description: What exists today (files, modules, behaviour) }
+    validations: { required: true }
+  - type: textarea
+    id: expected
+    attributes: { label: Expected behavior, description: The final outcome }
+    validations: { required: true }
+  - type: textarea
+    id: approach
+    attributes: { label: Technical approach and files, description: Confirmed existing paths vs. proposed new paths }
+    validations: { required: true }
+  - type: textarea
+    id: steps
+    attributes: { label: Implementation steps, description: Numbered, in order }
+    validations: { required: true }
+  - type: textarea
+    id: changes
+    attributes: { label: API / data / event / UI changes }
+  - type: textarea
+    id: security
+    attributes: { label: Security, authorization and tenant isolation }
+    validations: { required: true }
+  - type: textarea
+    id: edge
+    attributes: { label: Error handling, edge cases and recovery }
+    validations: { required: true }
+  - type: textarea
+    id: dependencies
+    attributes: { label: Dependencies, description: Blocking issues }
+  - type: textarea
+    id: acceptance
+    attributes: { label: Acceptance criteria, description: Given / When / Then, observable and testable }
+    validations: { required: true }
+  - type: textarea
+    id: tests
+    attributes: { label: Testing requirements, description: Unit, integration, contract, E2E, security, failure-path }
+    validations: { required: true }
+  - type: textarea
+    id: docs
+    attributes: { label: Documentation updates }
+    validations: { required: true }
+  - type: textarea
+    id: dod
+    attributes: { label: Definition of done }
+    validations: { required: true }
+  - type: textarea
+    id: oos
+    attributes: { label: Out of scope }
+    validations: { required: true }

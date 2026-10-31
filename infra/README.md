@@ -11,12 +11,12 @@ directly from your machine. Dev and prod are simply different
 projects/clusters on the same providers. Each app's `.env.*.example` files
 list where each connection string and key goes.
 
-| Concern | Provider | Why |
-|---|---|---|
-| Postgres (auth, seller, order, payment) | [Neon](https://neon.tech) | Serverless Postgres, instant branching (one branch per environment), generous free tier |
-| MongoDB (product catalog) | [MongoDB Atlas](https://www.mongodb.com/atlas) | Free M0 cluster covers dev; dedicated cluster for prod |
-| Redis (cache/sessions/rate-limit) | [Upstash Redis](https://upstash.com) | Serverless, REST + TCP, free tier, no server to run |
-| Kafka (event bus) | [Redpanda Cloud Serverless](https://redpanda.com/redpanda-cloud) | Kafka-API compatible, free tier, no local broker to install |
+| Concern                                 | Provider                                                         | Why                                                                                     |
+| --------------------------------------- | ---------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| Postgres (auth, seller, order, payment) | [Neon](https://neon.tech)                                        | Serverless Postgres, instant branching (one branch per environment), generous free tier |
+| MongoDB (product catalog)               | [MongoDB Atlas](https://www.mongodb.com/atlas)                   | Free M0 cluster covers dev; dedicated cluster for prod                                  |
+| Redis (cache/sessions/rate-limit)       | [Upstash Redis](https://upstash.com)                             | Serverless, REST + TCP, free tier, no server to run                                     |
+| Kafka (event bus)                       | [Redpanda Cloud Serverless](https://redpanda.com/redpanda-cloud) | Kafka-API compatible, free tier, no local broker to install                             |
 
 Each `apps/<service>/.env.development.example` and
 `.env.production.example` lists the exact env vars to fill in from these

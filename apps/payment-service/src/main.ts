@@ -14,7 +14,9 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
     .setTitle("BetterBasket Payment Service")
-    .setDescription("Stripe Connect payment intents, webhooks, seller payout ledger. Postgres-backed.")
+    .setDescription(
+      "Stripe Connect payment intents, webhooks, seller payout ledger. Postgres-backed.",
+    )
     .setVersion("0.1.0")
     .addBearerAuth()
     .build();

@@ -47,22 +47,22 @@ betterbasket-ecommerce/
 
 ## Tech stack
 
-| Layer | Choice |
-|---|---|
-| Monorepo | Turborepo + pnpm workspaces |
-| Frontends | Next.js 15 (App Router), Tailwind v4, shadcn/ui, TanStack Query, Zustand |
-| Backend | NestJS (TypeScript) for all 9 services; FastAPI/Python planned for the deferred recommendation-service |
-| Auth | [Better Auth](https://www.better-auth.com) — `organization` (sellers), `admin` (platform RBAC/ban/impersonate), `jwt`+JWKS (cross-service auth) |
-| Databases | Postgres (Neon) for auth/seller/order/payment · MongoDB (Atlas) for product catalog · Redis (Upstash) for cache/sessions |
-| Messaging | Kafka via Redpanda Cloud Serverless — see `packages/contracts/src/events` for the schema-validated event catalog |
-| Gateway | Custom NestJS app — routes, rate-limits (`@nestjs/throttler`); auth is verified per-service, not at the gateway |
-| Payments | Stripe Connect (Express accounts) |
-| Media | ImageKit (signed direct browser uploads) |
-| Real-time | Socket.IO (`analytics-service`) for live seller/admin dashboards |
-| Validation | Zod schemas shared via `@betterbasket/contracts` (not class-validator) |
-| API docs | `@nestjs/swagger` per service at `/docs` |
-| Testing | Jest + Supertest (services), Playwright (frontends), isolated cloud test databases for integration tests (no Testcontainers) |
-| Deployment | Vercel (3 separate projects, one per frontend) + Render (one service per backend) *(target; no deployment configuration exists in the repository yet)* |
+| Layer      | Choice                                                                                                                                                 |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Monorepo   | Turborepo + pnpm workspaces                                                                                                                            |
+| Frontends  | Next.js 15 (App Router), Tailwind v4, shadcn/ui, TanStack Query, Zustand                                                                               |
+| Backend    | NestJS (TypeScript) for all 9 services; FastAPI/Python planned for the deferred recommendation-service                                                 |
+| Auth       | [Better Auth](https://www.better-auth.com) — `organization` (sellers), `admin` (platform RBAC/ban/impersonate), `jwt`+JWKS (cross-service auth)        |
+| Databases  | Postgres (Neon) for auth/seller/order/payment · MongoDB (Atlas) for product catalog · Redis (Upstash) for cache/sessions                               |
+| Messaging  | Kafka via Redpanda Cloud Serverless — see `packages/contracts/src/events` for the schema-validated event catalog                                       |
+| Gateway    | Custom NestJS app — routes, rate-limits (`@nestjs/throttler`); auth is verified per-service, not at the gateway                                        |
+| Payments   | Stripe Connect (Express accounts)                                                                                                                      |
+| Media      | ImageKit (signed direct browser uploads)                                                                                                               |
+| Real-time  | Socket.IO (`analytics-service`) for live seller/admin dashboards                                                                                       |
+| Validation | Zod schemas shared via `@betterbasket/contracts` (not class-validator)                                                                                 |
+| API docs   | `@nestjs/swagger` per service at `/docs`                                                                                                               |
+| Testing    | Jest + Supertest (services), Playwright (frontends), isolated cloud test databases for integration tests (no Testcontainers)                           |
+| Deployment | Vercel (3 separate projects, one per frontend) + Render (one service per backend) _(target; no deployment configuration exists in the repository yet)_ |
 
 ## Local development — no Docker required
 
@@ -110,7 +110,6 @@ repo:
 - Every backend service → its own Render service (deployment configuration is not yet in the repository).
 - CI (`.github/workflows/ci.yml`) uses Turborepo's affected-package
   filtering so a change to one service doesn't rebuild the other eleven.
-
 
 ## Status
 
