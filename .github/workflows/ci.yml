@@ -88,10 +88,29 @@ jobs:
       - name: Formatting
         run: pnpm format:check
 
+  contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @betterbasket/contracts build
+      - name: Verify committed schema snapshots
+        run: pnpm --filter @betterbasket/contracts schemas:check
+      - name: Check compatibility with the PR base
+        if: github.event_name == 'pull_request'
+        run: pnpm --filter @betterbasket/contracts schemas:diff "origin/${{ github.base_ref }}"
+
   # The only check that branch protection should require. It cannot be skipped: it always runs and
   # fails unless every job it depends on actually succeeded (a failed, cancelled or skipped job fails the gate).
   ci-gate:
-    needs: [changes, verify]
+    needs: [changes, verify, contracts]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -99,7 +118,8 @@ jobs:
         run: |
           echo "changes: ${{ needs.changes.result }}"
           echo "verify:  ${{ needs.verify.result }}"
-          if [ "${{ needs.changes.result }}" != "success" ] || [ "${{ needs.verify.result }}" != "success" ]; then
+          echo "contracts: ${{ needs.contracts.result }}"
+          if [ "${{ needs.changes.result }}" != "success" ] || [ "${{ needs.verify.result }}" != "success" ] || [ "${{ needs.contracts.result }}" != "success" ]; then
             echo "::error::A required job did not succeed (failed, cancelled or skipped)."
             exit 1
           fi
