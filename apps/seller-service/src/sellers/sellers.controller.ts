@@ -22,7 +22,9 @@ export class SellersController {
     @Body(new ZodValidationPipe(CreateSellerInputSchema)) body: CreateSellerInput,
   ) {
     if (!req.user.activeOrganizationId) {
-      throw new Error("No active organization — create one via authClient.organization.create() first");
+      throw new Error(
+        "No active organization — create one via authClient.organization.create() first",
+      );
     }
     return this.sellersService.onboard(req.user.activeOrganizationId, body);
   }

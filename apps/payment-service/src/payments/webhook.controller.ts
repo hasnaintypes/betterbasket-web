@@ -15,12 +15,18 @@ export class WebhookController {
   constructor(private readonly paymentsService: PaymentsService) {}
 
   @Post()
-  async handle(@Req() req: Request & { rawBody?: Buffer }, @Headers("stripe-signature") signature: string) {
+  async handle(
+    @Req() req: Request & { rawBody?: Buffer },
+    @Headers("stripe-signature") signature: string,
+  ) {
     if (!req.rawBody) throw new BadRequestException("Missing raw body");
 
     const event = this.paymentsService.verifyWebhookSignature(req.rawBody, signature);
 
-    if (event.type === "payment_intent.succeeded" || event.type === "payment_intent.payment_failed") {
+    if (
+      event.type === "payment_intent.succeeded" ||
+      event.type === "payment_intent.payment_failed"
+    ) {
       await this.paymentsService.handlePaymentIntentEvent(event);
     }
 

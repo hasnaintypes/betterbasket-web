@@ -5,10 +5,13 @@ import { AppService } from "./app.service";
 import { AnalyticsModule } from "./analytics/analytics.module";
 
 @Module({
-  imports: [ConfigModule.forRoot({
+  imports: [
+    ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: [`.env.${process.env.NODE_ENV ?? "development"}`, ".env"],
-    }), AnalyticsModule],
+    }),
+    AnalyticsModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

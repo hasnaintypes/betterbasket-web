@@ -7,7 +7,9 @@ export interface RunConsumerOptions<T extends TopicName> {
   consumer: Consumer;
   topic: T;
   /** Handler receives the *validated* payload (schema.parse'd), not the raw envelope. */
-  onMessage: (payload: ReturnType<(typeof EventSchemaByTopic)[T]["parse"]>["payload"]) => Promise<void>;
+  onMessage: (
+    payload: ReturnType<(typeof EventSchemaByTopic)[T]["parse"]>["payload"],
+  ) => Promise<void>;
   logger: Logger;
   /** Max in-process retries before publishing to `<topic>.dlq`. Default 3. */
   maxRetries?: number;
@@ -46,7 +48,10 @@ export async function runConsumer<T extends TopicName>({
           if (attempt === maxRetries) {
             if (dlqProducer) {
               await dlqProducer.send({ topic: `${resolvedTopic}.dlq`, messages: [{ value: raw }] });
-              logger.error({ topic: resolvedTopic }, "message sent to DLQ after exhausting retries");
+              logger.error(
+                { topic: resolvedTopic },
+                "message sent to DLQ after exhausting retries",
+              );
             } else {
               logger.error(
                 { topic: resolvedTopic },
