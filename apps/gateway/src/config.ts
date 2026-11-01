@@ -1,9 +1,11 @@
 import { z } from "zod";
-import { csv, port, url } from "@betterbasket/runtime";
+import { bool, csv, port, url } from "@betterbasket/runtime";
 
 export const gatewayEnvSchema = z.object({
   NODE_ENV: z.enum(["development", "production"]),
   PORT: port(),
+  ENABLE_DOCS: bool().optional(),
+  GIT_SHA: z.string().min(1).optional(),
   CORS_ALLOWED_ORIGINS: csv().pipe(z.array(url()).min(1)),
   AUTH_SERVICE_URL: url(),
   PRODUCT_SERVICE_URL: url(),
