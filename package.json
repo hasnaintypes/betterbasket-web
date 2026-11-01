@@ -18,7 +18,9 @@
     "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,md,json}\"",
     "check:md-links": "node .github/scripts/check-md-links.mjs",
-    "test:scripts": "node --test .github/scripts/*.test.mjs"
+    "test:scripts": "node --test .github/scripts/*.test.mjs",
+    "check:env-examples": "node .github/scripts/check-env-examples.mjs",
+    "check:gateway-startup": "node .github/scripts/test-gateway-startup.mjs"
   },
   "devDependencies": {
     "prettier": "^3.3.3",

@@ -1,17 +1,32 @@
-/**
- * Every downstream service gets a fixed URL via env var (Railway/Render
- * internal networking in prod, localhost ports in dev/docker-compose). This
- * is the "environment-variable based service registry" — no Consul/etcd.
- */
-export const ServiceRegistry = {
-  auth: process.env.AUTH_SERVICE_URL ?? "http://localhost:4001",
-  product: process.env.PRODUCT_SERVICE_URL ?? "http://localhost:4002",
-  seller: process.env.SELLER_SERVICE_URL ?? "http://localhost:4003",
-  order: process.env.ORDER_SERVICE_URL ?? "http://localhost:4004",
-  payment: process.env.PAYMENT_SERVICE_URL ?? "http://localhost:4005",
-  notification: process.env.NOTIFICATION_SERVICE_URL ?? "http://localhost:4006",
-  media: process.env.MEDIA_SERVICE_URL ?? "http://localhost:4007",
-  analytics: process.env.ANALYTICS_SERVICE_URL ?? "http://localhost:4008",
-} as const;
+import { Inject, Injectable } from "@nestjs/common";
+import { GATEWAY_CONFIG, type GatewayConfig } from "../config";
 
-export type ServiceName = keyof typeof ServiceRegistry;
+@Injectable()
+export class ServiceRegistry {
+  constructor(@Inject(GATEWAY_CONFIG) private readonly config: GatewayConfig) {}
+
+  get auth() {
+    return this.config.AUTH_SERVICE_URL;
+  }
+  get product() {
+    return this.config.PRODUCT_SERVICE_URL;
+  }
+  get seller() {
+    return this.config.SELLER_SERVICE_URL;
+  }
+  get order() {
+    return this.config.ORDER_SERVICE_URL;
+  }
+  get payment() {
+    return this.config.PAYMENT_SERVICE_URL;
+  }
+  get notification() {
+    return this.config.NOTIFICATION_SERVICE_URL;
+  }
+  get media() {
+    return this.config.MEDIA_SERVICE_URL;
+  }
+  get analytics() {
+    return this.config.ANALYTICS_SERVICE_URL;
+  }
+}

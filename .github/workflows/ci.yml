@@ -68,6 +68,12 @@ jobs:
           else
             pnpm turbo run lint type-check test build
           fi
+      - name: Check environment examples against app schemas
+        run: pnpm check:env-examples
+      - name: Verify gateway startup rejects missing configuration
+        run: |
+          pnpm turbo run build --filter=gateway...
+          pnpm check:gateway-startup
 
   # Repository hygiene checks. Non-gating at first (not part of ci-gate); promote once stable.
   markdown:

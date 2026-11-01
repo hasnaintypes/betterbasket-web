@@ -13,16 +13,16 @@ import { ServiceRegistry } from "./service-registry";
  * keeps the gateway a thin, replaceable layer instead of a second source of
  * truth for auth.
  */
-export function registerProxies(app: INestApplication): void {
+export function registerProxies(app: INestApplication, registry: ServiceRegistry): void {
   const routes: Array<[prefix: string, target: string, ws?: boolean]> = [
-    ["/api/auth", ServiceRegistry.auth],
-    ["/api/products", ServiceRegistry.product],
-    ["/api/sellers", ServiceRegistry.seller],
-    ["/api/orders", ServiceRegistry.order],
-    ["/api/payments", ServiceRegistry.payment],
-    ["/api/notifications", ServiceRegistry.notification],
-    ["/api/media", ServiceRegistry.media],
-    ["/api/analytics", ServiceRegistry.analytics, true],
+    ["/api/auth", registry.auth],
+    ["/api/products", registry.product],
+    ["/api/sellers", registry.seller],
+    ["/api/orders", registry.order],
+    ["/api/payments", registry.payment],
+    ["/api/notifications", registry.notification],
+    ["/api/media", registry.media],
+    ["/api/analytics", registry.analytics, true],
   ];
 
   for (const [prefix, target, ws] of routes) {
