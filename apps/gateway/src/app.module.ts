@@ -4,7 +4,6 @@ import { ConfigModule } from "@nestjs/config";
 import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
 import { loadConfig } from "@betterbasket/runtime";
 import { GATEWAY_CONFIG, gatewayEnvSchema, gatewayTestSchema } from "./config";
-import { ServiceRegistry } from "./proxy/service-registry";
 
 @Module({
   imports: [
@@ -15,7 +14,6 @@ import { ServiceRegistry } from "./proxy/service-registry";
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 120 }]),
   ],
   providers: [
-    ServiceRegistry,
     {
       provide: GATEWAY_CONFIG,
       useFactory: () =>
