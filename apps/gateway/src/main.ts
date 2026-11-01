@@ -4,7 +4,6 @@ import { bootstrapService } from "@betterbasket/runtime";
 import { AppModule } from "./app.module";
 import { registerProxies } from "./proxy/register-proxies";
 import { GATEWAY_CONFIG, type GatewayConfig } from "./config";
-import { ServiceRegistry } from "./proxy/service-registry";
 
 async function bootstrap() {
   await bootstrapService({
@@ -24,7 +23,7 @@ async function bootstrap() {
         const config = app.get<GatewayConfig>(GATEWAY_CONFIG);
         app.enableCors({ origin: config.CORS_ALLOWED_ORIGINS });
         app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
-        registerProxies(app, app.get(ServiceRegistry));
+        registerProxies(app, config);
       },
     },
   });

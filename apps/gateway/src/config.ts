@@ -12,7 +12,6 @@ export const gatewayEnvSchema = z.object({
   SELLER_SERVICE_URL: url(),
   ORDER_SERVICE_URL: url(),
   PAYMENT_SERVICE_URL: url(),
-  NOTIFICATION_SERVICE_URL: url(),
   MEDIA_SERVICE_URL: url(),
   ANALYTICS_SERVICE_URL: url(),
 });

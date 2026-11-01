@@ -1,7 +1,6 @@
 import { createTestApp } from "@betterbasket/test-utils";
 import { AppModule } from "./app.module";
 import { GATEWAY_CONFIG, type GatewayConfig } from "./config";
-import { ServiceRegistry } from "./proxy/service-registry";
 
 const testConfig = {
   NODE_ENV: "test",
@@ -12,7 +11,6 @@ const testConfig = {
   SELLER_SERVICE_URL: "http://localhost:4003",
   ORDER_SERVICE_URL: "http://localhost:4004",
   PAYMENT_SERVICE_URL: "http://localhost:4005",
-  NOTIFICATION_SERVICE_URL: "http://localhost:4006",
   MEDIA_SERVICE_URL: "http://localhost:4007",
   ANALYTICS_SERVICE_URL: "http://localhost:4008",
 };
@@ -31,7 +29,7 @@ describe("gateway configuration", () => {
       expect(config.PORT).toBe(4000);
       expect(config.CORS_ALLOWED_ORIGINS).toEqual(["http://localhost:3000"]);
       expect(Object.isFrozen(config)).toBe(true);
-      expect(app.get(ServiceRegistry).auth).toBe(testConfig.AUTH_SERVICE_URL);
+      expect(config.AUTH_SERVICE_URL).toBe(testConfig.AUTH_SERVICE_URL);
     } finally {
       await close();
     }
