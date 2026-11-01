@@ -49,6 +49,7 @@ test(
       ENABLE_DOCS: "false",
       GIT_SHA: "test-sha",
       AUTH_SERVICE_URL: upstream.url,
+      PAYMENT_SERVICE_URL: upstream.url,
       PRODUCT_SERVICE_URL: `http://127.0.0.1:${unavailablePort}`,
       CORS_ALLOWED_ORIGINS: "https://allowed.example",
     });
@@ -82,6 +83,14 @@ test(
       }
       assert.ok(health?.ok, `Gateway did not become ready: ${output.slice(-1200)}`);
       assert.equal((await health.json()).version, "test-sha");
+      assert.equal(health.headers.get("x-content-type-options"), "nosniff");
+      const healthWithOrigin = await fetch(`${base}/health`, {
+        headers: { Origin: "https://allowed.example" },
+      });
+      assert.equal(
+        healthWithOrigin.headers.get("access-control-allow-origin"),
+        "https://allowed.example",
+      );
       assert.equal((await fetch(`${base}/ready`)).status, 200);
       assert.equal((await fetch(`${base}/docs`)).status, 404);
       const allowed = await fetch(`${base}/health`, {
@@ -102,6 +111,15 @@ test(
       assert.equal(upstream.requests.length, 1);
       assert.equal(upstream.requests[0].method, "GET");
       assert.equal(upstream.requests[0].headers.authorization, `Bearer ${token}`);
+      const webhookBody = ' { "value": "☃" } ';
+      const webhook = await fetch(`${base}/webhooks/stripe/account`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Stripe-Signature": "t=1,v1=test" },
+        body: webhookBody,
+      });
+      assert.equal(webhook.status, 200);
+      assert.equal(upstream.requests[1].url, "/payments/webhook/account");
+      assert.equal(upstream.requests[1].body.toString(), webhookBody);
       const unavailable = await fetch(`${base}/api/products/ping`);
       assert.equal(unavailable.status, 502);
       const unavailableBody = await unavailable.json();

@@ -112,6 +112,18 @@ describe("gateway HTTP route table", () => {
     }
   });
 
+  it("enforces auth cache policy over an upstream response", async () => {
+    const { stub, client, close } = await fixture();
+    try {
+      stub.enqueue({ headers: { "Cache-Control": "public, max-age=3600" } });
+      const response = await client.get("/api/auth/sign-in/email");
+      expect(response.headers["cache-control"]).toBe("no-store");
+      expect(response.headers["x-content-type-options"]).toBe("nosniff");
+    } finally {
+      await close();
+    }
+  });
+
   it.each([
     "/api/products/..%2f..%2fauth/x",
     "/api/products/%2e%2e/x",

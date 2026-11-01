@@ -14,4 +14,10 @@ The gateway sends HTTP requests to private services using the validated `*_SERVI
 
 The suffix and query string are preserved. The gateway propagates a valid UUID `X-Request-Id` or generates one, strips hop-by-hop headers, rejects unsafe paths, and limits upstream calls to 8 seconds. Connection failures return a 502 `UPSTREAM_UNAVAILABLE` envelope; timeouts return a 504 `TIMEOUT` envelope. There is no HTTP route for notification-service.
 
-WebSocket upgrades and Stripe webhooks are separate planned gateway work.
+## Browser access and webhooks
+
+Set `CORS_ALLOWED_ORIGINS` to a comma-separated list of frontend origins. The gateway allows credentials and the `GET, POST, PUT, PATCH, DELETE, OPTIONS` methods, with `Authorization`, `Content-Type`, `Idempotency-Key`, and `X-Request-Id` request headers. Preflight responses are cached for 10 minutes. Other origins receive no CORS headers.
+
+Only `POST /webhooks/stripe/account` and `POST /webhooks/stripe/connect` reach payment-service at `/payments/webhook/account` and `/payments/webhook/connect`. The gateway streams the request body unchanged, forwards `Stripe-Signature` and `Content-Type`, removes authorization, cookies, and internal headers, and rejects bodies over 1 MB. Payment-service verifies the signature. Other methods return 405.
+
+Gateway responses include `X-Content-Type-Options`, `Strict-Transport-Security`, and `Referrer-Policy`; auth routes also use `Cache-Control: no-store`. WebSocket upgrades are separate planned gateway work.
