@@ -26,6 +26,23 @@ export const baseConfig = [
       "no-console": ["warn", { allow: ["warn", "error"] }],
     },
   },
+  {
+    files: ["**/src/**/*.{ts,tsx}"],
+    ignores: ["**/*.spec.ts", "**/*.test.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@betterbasket/test-utils", "@betterbasket/test-utils/*"],
+              message: "Test utilities may only be imported from test files.",
+            },
+          ],
+        },
+      ],
+    },
+  },
   prettier,
 ];
 

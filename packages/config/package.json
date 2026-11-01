@@ -5,12 +5,14 @@
   "type": "module",
   "files": [
     "typescript",
-    "eslint"
+    "eslint",
+    "jest"
   ],
   "exports": {
     "./eslint/base": "./eslint/base.js",
     "./eslint/nestjs": "./eslint/nestjs.js",
     "./eslint/nextjs": "./eslint/nextjs.js",
+    "./jest": "./jest/index.cjs",
     "./typescript/base.json": "./typescript/base.json",
     "./typescript/nestjs.json": "./typescript/nestjs.json",
     "./typescript/nextjs.json": "./typescript/nextjs.json"
