@@ -31,7 +31,8 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "esbuild",
-      "@scarf/scarf"
+      "@scarf/scarf",
+      "@swc/core"
     ],
     "overrides": {
       "test-exclude": "^8.0.0",
