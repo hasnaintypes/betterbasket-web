@@ -23,3 +23,11 @@ export class AppModule implements NestModule {
 ```
 
 Use `new ZodValidationPipe(schema)` on request bodies and parameters. It returns parsed data or a 400 `VALIDATION_FAILED` envelope with JSON-pointer-like field paths. The filter converts Nest HTTP exceptions, direct Zod errors, and unknown errors into `{ error: { code, message, requestId, details } }`. Unknown server failures are logged with full detail and return a safe generic message.
+
+## Service bootstrap
+
+`bootstrapService({ module, name, port, options })` creates a Nest app with CORS disabled, Pino logging, request IDs, the error filter, graceful shutdown hooks, and a listener on `0.0.0.0`. It returns the running app. Pass a port callback when the port becomes available only after the module loads its environment file. `beforeInit` can mount raw body handlers or proxy routes before Nest registers its 404 handler. `bodyParser: false` and `rawBody: true` pass through to Nest.
+
+The helper serves `GET /health` with `status`, `service`, `timestamp`, and `version` from `GIT_SHA` (or `unknown`). `GET /ready` is 200 with no checks registered. Register checks with `getReadinessRegistry(app).register(name, check)`; a failed or thrown check returns 503. Readiness also returns 503 during shutdown. SIGTERM starts graceful shutdown so in-flight requests can finish.
+
+Swagger is served when `NODE_ENV` is not `production`, or when `ENABLE_DOCS=true`. In production it is otherwise absent. Apps that need browser access must explicitly enable CORS with their own validated origin list.

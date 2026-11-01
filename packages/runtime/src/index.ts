@@ -64,3 +64,4 @@ export {
   acceptedRequestId,
 } from "./http/request-id.middleware";
 export { ZodValidationPipe } from "./http/zod-validation.pipe";
+export { bootstrapService, getReadinessRegistry } from "./bootstrap/bootstrap-service";
