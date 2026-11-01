@@ -64,6 +64,7 @@ class PinoNestLogger implements LoggerService {
 export interface BootstrapServiceOptions {
   bodyParser?: boolean;
   rawBody?: boolean;
+  beforeRoutes?: (app: INestApplication) => void | Promise<void>;
   beforeInit?: (app: INestApplication) => void | Promise<void>;
   swagger?: { title: string; description: string; version: string };
 }
@@ -95,6 +96,7 @@ export async function bootstrapService({
 
   const registry = new ReadinessRegistry();
   registries.set(app, registry);
+  await options.beforeRoutes?.(app);
   const expressApp = app.getHttpAdapter().getInstance() as Express;
   expressApp.get("/health", (_req, res) => {
     res.json({

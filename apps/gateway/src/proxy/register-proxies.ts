@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { acceptedRequestId, getRequestId, getRequestLogger } from "@betterbasket/runtime";
 import type { GatewayConfig } from "../config";
+import { securityHeaders } from "../cors";
 import { routes } from "./routes";
 
 const hopHeaders = [
@@ -121,6 +122,8 @@ export function registerProxies(app: INestApplication, config: GatewayConfig): v
           proxyRes: (proxyRes, req) => {
             proxyStartedAt.delete(req);
             stripHopHeaders(proxyRes.headers, proxyRes.headers.connection);
+            Object.assign(proxyRes.headers, securityHeaders);
+            if (route.prefix === "/api/auth") proxyRes.headers["cache-control"] = "no-store";
             proxyRes.headers["x-request-id"] =
               getRequestId() ?? acceptedRequestId(req.headers["x-request-id"]) ?? randomUUID();
           },

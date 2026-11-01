@@ -4,6 +4,8 @@ import { bootstrapService } from "@betterbasket/runtime";
 import { AppModule } from "./app.module";
 import { registerProxies } from "./proxy/register-proxies";
 import { GATEWAY_CONFIG, type GatewayConfig } from "./config";
+import { configureCors, registerSecurityHeaders } from "./cors";
+import { registerWebhooks } from "./proxy/webhooks";
 
 async function bootstrap() {
   await bootstrapService({
@@ -11,6 +13,11 @@ async function bootstrap() {
     name: "gateway",
     port: (app) => app.get<GatewayConfig>(GATEWAY_CONFIG).PORT,
     options: {
+      bodyParser: false,
+      beforeRoutes: (app) => {
+        registerSecurityHeaders(app);
+        configureCors(app, app.get<GatewayConfig>(GATEWAY_CONFIG));
+      },
       swagger: {
         title: "BetterBasket API Gateway",
         description:
@@ -21,8 +28,8 @@ async function bootstrap() {
       },
       beforeInit: (app) => {
         const config = app.get<GatewayConfig>(GATEWAY_CONFIG);
-        app.enableCors({ origin: config.CORS_ALLOWED_ORIGINS });
         app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+        registerWebhooks(app, config);
         registerProxies(app, config);
       },
     },
