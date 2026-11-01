@@ -7,6 +7,8 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 import testUtils from "@betterbasket/test-utils";
+import { Server as SocketServer } from "socket.io";
+import { io } from "socket.io-client";
 
 const { createStubUpstream, createJwtTestIssuer } = testUtils;
 
@@ -28,6 +30,17 @@ test(
   async () => {
     const upstream = await createStubUpstream();
     const issuer = await createJwtTestIssuer();
+    const analyticsHttp = createServer();
+    const analyticsSockets = new SocketServer(analyticsHttp, {
+      path: "/socket.io",
+      transports: ["websocket"],
+    });
+    analyticsSockets.of("/realtime").on("connection", (socket) => {
+      socket.on("echo", (value, acknowledge) => acknowledge(value));
+    });
+    analyticsHttp.listen(0, "127.0.0.1");
+    await once(analyticsHttp, "listening");
+    const analyticsPort = analyticsHttp.address().port;
     const token = await issuer.sign({ sub: "gateway-test-user" });
     upstream.enqueue({
       headers: { "Content-Type": "application/json" },
@@ -50,6 +63,7 @@ test(
       GIT_SHA: "test-sha",
       AUTH_SERVICE_URL: upstream.url,
       PAYMENT_SERVICE_URL: upstream.url,
+      ANALYTICS_SERVICE_URL: `http://127.0.0.1:${analyticsPort}`,
       PRODUCT_SERVICE_URL: `http://127.0.0.1:${unavailablePort}`,
       CORS_ALLOWED_ORIGINS: "https://allowed.example",
     });
@@ -69,6 +83,7 @@ test(
     child.once("exit", (code, signal) => {
       exit = { code, signal };
     });
+    let wsClient;
     try {
       let health;
       for (let attempt = 0; attempt < 200; attempt++) {
@@ -125,15 +140,33 @@ test(
       const unavailableBody = await unavailable.json();
       assert.equal(unavailableBody.error.code, "UPSTREAM_UNAVAILABLE");
       assert.equal(unavailableBody.error.requestId, unavailable.headers.get("x-request-id"));
+      assert.equal((await fetch(`${base}/internal/x`)).status, 404);
+      assert.equal((await fetch(`${base}/api/auth/jwks`)).status, 404);
+      wsClient = io(`${base}/realtime`, {
+        path: "/realtime",
+        transports: ["websocket"],
+        extraHeaders: { Origin: "https://allowed.example" },
+        reconnection: false,
+        timeout: 3000,
+      });
+      await new Promise((resolve, reject) => {
+        wsClient.once("connect", resolve);
+        wsClient.once("connect_error", reject);
+      });
+      const echoed = await new Promise((resolve) => wsClient.emit("echo", "through-main", resolve));
+      assert.equal(echoed, "through-main");
+      wsClient.disconnect();
       const before = Date.now();
       child.kill("SIGTERM");
       if (!exit) await once(child, "exit");
       assert.ok(Date.now() - before < 10_000);
       assert.ok(exit.code === 0 || exit.signal === "SIGTERM");
     } finally {
+      wsClient?.disconnect();
       if (!exit) child.kill("SIGKILL");
       await upstream.close();
       await issuer.close();
+      await new Promise((resolve) => analyticsSockets.close(() => resolve()));
     }
   },
 );

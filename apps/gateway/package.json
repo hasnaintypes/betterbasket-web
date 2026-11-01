@@ -43,6 +43,8 @@
     "@types/supertest": "^6.0.2",
     "eslint": "^10.10.0",
     "jest": "^30.5.1",
+    "socket.io": "^4.8.3",
+    "socket.io-client": "^4.8.4",
     "supertest": "^7.0.0",
     "ts-jest": "^29.4.12",
     "ts-node": "^10.9.2",
