@@ -1,7 +1,8 @@
 import type { INestApplication } from "@nestjs/common";
 import { createProxyMiddleware } from "http-proxy-middleware";
 import { randomUUID } from "node:crypto";
-import type { IncomingMessage, ServerResponse } from "node:http";
+import type { IncomingMessage, Server, ServerResponse } from "node:http";
+import type { Socket } from "node:net";
 import { acceptedRequestId, getRequestId, getRequestLogger } from "@betterbasket/runtime";
 import type { GatewayConfig } from "../config";
 import { securityHeaders } from "../cors";
@@ -151,4 +152,38 @@ export function registerProxies(app: INestApplication, config: GatewayConfig): v
       }),
     );
   }
+}
+
+/** Upgrade URLs retain their public prefix; analytics uses Socket.IO's /socket.io engine path. */
+export function registerWebSocketUpgrades(server: Server, config: GatewayConfig): void {
+  const proxy = createProxyMiddleware({
+    target: config.ANALYTICS_SERVICE_URL,
+    changeOrigin: true,
+    ws: true,
+    pathRewrite: (path) => path.replace(/^\/realtime(?=\/|\?|$)/, "/socket.io"),
+    on: {
+      proxyReqWs: (proxyReq, req) => {
+        proxyReq.setHeader(
+          "X-Request-Id",
+          acceptedRequestId(req.headers["x-request-id"]) ?? randomUUID(),
+        );
+      },
+      error: (err, _req, res) => {
+        getRequestLogger()?.error({ err, route: "/realtime" }, "websocket proxy failed");
+        res.destroy();
+      },
+    },
+  });
+  server.on("upgrade", (req, socket, head) => {
+    const path = (req.url ?? "").split("?", 1)[0];
+    if (
+      (path !== "/realtime" && path !== "/realtime/") ||
+      typeof req.headers.origin !== "string" ||
+      !config.CORS_ALLOWED_ORIGINS.includes(req.headers.origin)
+    ) {
+      socket.destroy();
+      return;
+    }
+    proxy.upgrade(req, socket as Socket, head);
+  });
 }

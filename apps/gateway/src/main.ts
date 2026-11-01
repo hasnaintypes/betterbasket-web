@@ -6,9 +6,11 @@ import { registerProxies } from "./proxy/register-proxies";
 import { GATEWAY_CONFIG, type GatewayConfig } from "./config";
 import { configureCors, registerSecurityHeaders } from "./cors";
 import { registerWebhooks } from "./proxy/webhooks";
+import { registerBlockedPaths } from "./proxy/blocked";
+import { registerWebSocketUpgrades } from "./proxy/register-proxies";
 
 async function bootstrap() {
-  await bootstrapService({
+  const app = await bootstrapService({
     module: AppModule,
     name: "gateway",
     port: (app) => app.get<GatewayConfig>(GATEWAY_CONFIG).PORT,
@@ -29,11 +31,13 @@ async function bootstrap() {
       beforeInit: (app) => {
         const config = app.get<GatewayConfig>(GATEWAY_CONFIG);
         app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+        registerBlockedPaths(app);
         registerWebhooks(app, config);
         registerProxies(app, config);
       },
     },
   });
+  registerWebSocketUpgrades(app.getHttpServer(), app.get<GatewayConfig>(GATEWAY_CONFIG));
 }
 
 bootstrap();
