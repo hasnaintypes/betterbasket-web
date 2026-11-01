@@ -4,9 +4,13 @@ import { ValidationPipe } from "@nestjs/common";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import { AppModule } from "./app.module";
 import { registerProxies } from "./proxy/register-proxies";
+import { GATEWAY_CONFIG, type GatewayConfig } from "./config";
+import { ServiceRegistry } from "./proxy/service-registry";
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { cors: true });
+  const app = await NestFactory.create(AppModule);
+  const runtimeConfig = app.get<GatewayConfig>(GATEWAY_CONFIG);
+  app.enableCors({ origin: runtimeConfig.CORS_ALLOWED_ORIGINS });
 
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
@@ -24,9 +28,9 @@ async function bootstrap() {
   SwaggerModule.setup("docs", app, document);
 
   // Proxy routes must be registered after Nest's own routes/middleware.
-  registerProxies(app);
+  registerProxies(app, app.get(ServiceRegistry));
 
-  const port = process.env.PORT ?? 4000;
+  const port = runtimeConfig.PORT;
   await app.listen(port);
   // eslint-disable-next-line no-console
   console.log(`[gateway] listening on :${port} (docs at /docs)`);
