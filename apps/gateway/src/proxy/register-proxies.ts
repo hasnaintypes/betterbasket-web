@@ -1,5 +1,7 @@
 import type { INestApplication } from "@nestjs/common";
 import { createProxyMiddleware } from "http-proxy-middleware";
+import { randomUUID } from "node:crypto";
+import { getRequestId, getRequestLogger } from "@betterbasket/runtime";
 import { ServiceRegistry } from "./service-registry";
 
 /**
@@ -34,10 +36,20 @@ export function registerProxies(app: INestApplication, registry: ServiceRegistry
         ws: ws ?? false,
         on: {
           error: (err, _req, res) => {
-            console.error(`[gateway] proxy error for ${prefix} -> ${target}:`, err.message);
-            if ("writeHead" in res) {
-              res.writeHead(502, { "Content-Type": "application/json" });
-              res.end(JSON.stringify({ message: "Upstream service unavailable" }));
+            getRequestLogger()?.error({ err, prefix }, "proxy request failed");
+            if ("writeHead" in res && !res.headersSent) {
+              const requestId = getRequestId() ?? randomUUID();
+              res.writeHead(502, { "Content-Type": "application/json", "X-Request-Id": requestId });
+              res.end(
+                JSON.stringify({
+                  error: {
+                    code: "UPSTREAM_UNAVAILABLE",
+                    message: "Upstream service unavailable",
+                    requestId,
+                    details: [],
+                  },
+                }),
+              );
             }
           },
         },
