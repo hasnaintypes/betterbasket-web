@@ -6,6 +6,9 @@ import { once } from "node:events";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
+import testUtils from "@betterbasket/test-utils";
+
+const { createStubUpstream, createJwtTestIssuer } = testUtils;
 
 const serviceDir = fileURLToPath(new URL("..", import.meta.url));
 
@@ -23,12 +26,13 @@ test(
   "gateway bootstrap keeps explicit CORS and working proxy routes",
   { timeout: 35_000 },
   async () => {
-    const upstream = createServer((req, res) => {
-      res.setHeader("Content-Type", "application/json");
-      res.end(JSON.stringify({ path: req.url }));
+    const upstream = await createStubUpstream();
+    const issuer = await createJwtTestIssuer();
+    const token = await issuer.sign({ sub: "gateway-test-user" });
+    upstream.enqueue({
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ path: "/api/auth/ping" }),
     });
-    upstream.listen(0, "127.0.0.1");
-    await once(upstream, "listening");
     const port = await unusedPort();
     const unavailablePort = await unusedPort();
     const base = `http://127.0.0.1:${port}`;
@@ -44,7 +48,7 @@ test(
       PORT: String(port),
       ENABLE_DOCS: "false",
       GIT_SHA: "test-sha",
-      AUTH_SERVICE_URL: `http://127.0.0.1:${upstream.address().port}`,
+      AUTH_SERVICE_URL: upstream.url,
       PRODUCT_SERVICE_URL: `http://127.0.0.1:${unavailablePort}`,
       CORS_ALLOWED_ORIGINS: "https://allowed.example",
     });
@@ -90,9 +94,14 @@ test(
         headers: { Origin: "https://denied.example", "Access-Control-Request-Method": "GET" },
       });
       assert.equal(denied.headers.get("access-control-allow-origin"), null);
-      const proxied = await fetch(`${base}/api/auth/ping`);
+      const proxied = await fetch(`${base}/api/auth/ping`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       assert.equal(proxied.status, 200);
       assert.equal(typeof (await proxied.json()).path, "string");
+      assert.equal(upstream.requests.length, 1);
+      assert.equal(upstream.requests[0].method, "GET");
+      assert.equal(upstream.requests[0].headers.authorization, `Bearer ${token}`);
       const unavailable = await fetch(`${base}/api/products/ping`);
       assert.equal(unavailable.status, 502);
       const unavailableBody = await unavailable.json();
@@ -105,7 +114,8 @@ test(
       assert.ok(exit.code === 0 || exit.signal === "SIGTERM");
     } finally {
       if (!exit) child.kill("SIGKILL");
-      upstream.close();
+      await upstream.close();
+      await issuer.close();
     }
   },
 );

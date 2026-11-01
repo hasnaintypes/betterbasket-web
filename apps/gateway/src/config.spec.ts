@@ -1,4 +1,4 @@
-import { Test } from "@nestjs/testing";
+import { createTestApp } from "@betterbasket/test-utils";
 import { AppModule } from "./app.module";
 import { GATEWAY_CONFIG, type GatewayConfig } from "./config";
 import { ServiceRegistry } from "./proxy/service-registry";
@@ -25,15 +25,15 @@ describe("gateway configuration", () => {
 
   it("boots with validated test configuration and injects proxy targets", async () => {
     Object.assign(process.env, testConfig);
-    const module = await Test.createTestingModule({ imports: [AppModule] }).compile();
+    const { app, close } = await createTestApp(AppModule);
     try {
-      const config = module.get<GatewayConfig>(GATEWAY_CONFIG);
+      const config = app.get<GatewayConfig>(GATEWAY_CONFIG);
       expect(config.PORT).toBe(4000);
       expect(config.CORS_ALLOWED_ORIGINS).toEqual(["http://localhost:3000"]);
       expect(Object.isFrozen(config)).toBe(true);
-      expect(module.get(ServiceRegistry).auth).toBe(testConfig.AUTH_SERVICE_URL);
+      expect(app.get(ServiceRegistry).auth).toBe(testConfig.AUTH_SERVICE_URL);
     } finally {
-      await module.close();
+      await close();
     }
   });
 });
