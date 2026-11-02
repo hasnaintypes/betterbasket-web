@@ -217,7 +217,7 @@ describe("gateway Stripe webhook pass-through", () => {
         "Authorization,Content-Type,Idempotency-Key,X-Request-Id",
       );
       expect(allowed.headers["access-control-expose-headers"]).toBe(
-        "X-Request-Id,RateLimit-*,Retry-After",
+        "X-Request-Id,RateLimit-Limit,RateLimit-Remaining,RateLimit-Reset,Retry-After",
       );
       expect(allowed.headers["access-control-max-age"]).toBe("600");
       for (const origin of ["https://evil.example", "null"]) {

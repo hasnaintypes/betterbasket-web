@@ -135,6 +135,22 @@ test(
       assert.equal(webhook.status, 200);
       assert.equal(upstream.requests[1].url, "/payments/webhook/account");
       assert.equal(upstream.requests[1].body.toString(), webhookBody);
+      for (let attempt = 0; attempt < 21; attempt++) {
+        const signIn = await fetch(`${base}/api/auth/sign-in/email`, {
+          method: "POST",
+          headers: { "X-Forwarded-For": `203.0.113.${attempt + 1}` },
+        });
+        assert.equal(signIn.headers.get("ratelimit-limit"), "20");
+        if (attempt < 20) assert.equal(signIn.status, 200);
+        else {
+          assert.equal(signIn.status, 429);
+          const retryAfter = Number(signIn.headers.get("retry-after"));
+          assert.ok(retryAfter >= 1 && retryAfter <= 60);
+          assert.equal(signIn.headers.get("retry-after"), signIn.headers.get("ratelimit-reset"));
+          assert.equal((await signIn.json()).error.code, "RATE_LIMITED");
+        }
+      }
+      assert.equal(upstream.requests.length, 22);
       const unavailable = await fetch(`${base}/api/products/ping`);
       assert.equal(unavailable.status, 502);
       const unavailableBody = await unavailable.json();
@@ -142,6 +158,10 @@ test(
       assert.equal(unavailableBody.error.requestId, unavailable.headers.get("x-request-id"));
       assert.equal((await fetch(`${base}/internal/x`)).status, 404);
       assert.equal((await fetch(`${base}/api/auth/jwks`)).status, 404);
+      const blockedFlood = await Promise.all(
+        Array.from({ length: 125 }, () => fetch(`${base}/internal/x`)),
+      );
+      assert.ok(blockedFlood.every((response) => response.status === 404));
       wsClient = io(`${base}/realtime`, {
         path: "/realtime",
         transports: ["websocket"],
