@@ -8,7 +8,7 @@ import { sellers } from "../db/schema";
 
 @Injectable()
 export class SellersService {
-  private readonly stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? "sk_test_placeholder");
+  private readonly stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
   /**
    * Creates the commerce-side Seller row + a Stripe Connect Express account.
