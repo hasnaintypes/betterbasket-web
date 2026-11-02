@@ -1,27 +1,27 @@
 import "reflect-metadata";
-import { NestFactory } from "@nestjs/core";
-import { ValidationPipe } from "@nestjs/common";
-import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
-import { AppModule } from "./app.module";
+import type { Type } from "@nestjs/common";
+import { existsSync } from "node:fs";
+import { bootstrapService, loadConfig } from "@betterbasket/runtime";
+import { analyticsEnvSchema } from "./config";
 
-async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { cors: true });
-
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
-
-  const config = new DocumentBuilder()
-    .setTitle("BetterBasket Analytics Service")
-    .setDescription("Kafka consumer + Socket.IO gateway for real-time seller/admin dashboards.")
-    .setVersion("0.1.0")
-    .addBearerAuth()
-    .build();
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup("docs", app, document);
-
-  const port = process.env.PORT ?? 4008;
-  await app.listen(port);
-  // eslint-disable-next-line no-console
-  console.log(`[analytics-service] listening on :${port} (docs at /docs)`);
+export async function bootstrap(overrideModule?: Type<unknown>) {
+  const envFile = `.env.${process.env.NODE_ENV ?? "development"}`;
+  if (existsSync(envFile)) process.loadEnvFile(envFile);
+  else if (existsSync(".env")) process.loadEnvFile(".env");
+  const config = loadConfig(analyticsEnvSchema);
+  const AppModule = overrideModule ?? (await import("./app.module")).AppModule;
+  return bootstrapService({
+    module: AppModule,
+    name: "analytics-service",
+    port: overrideModule ? 0 : config.PORT,
+    options: {
+      swagger: {
+        title: "BetterBasket Analytics Service",
+        description: "Kafka consumer + Socket.IO gateway for real-time seller/admin dashboards.",
+        version: "0.1.0",
+      },
+    },
+  });
 }
 
-bootstrap();
+if (require.main === module) void bootstrap();
