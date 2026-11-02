@@ -88,7 +88,7 @@ pnpm --filter auth-service db:migrate
 pnpm turbo dev
 ```
 
-Each service exposes `GET /health` and Swagger UI at `/docs` once running
+Each service exposes `GET /health` (liveness) and `GET /ready` (readiness). Swagger UI is available at `/docs` outside production, or in production only when `ENABLE_DOCS=true`.
 (ports: gateway 4000, auth 4001, product 4002, seller 4003, order 4004,
 payment 4005, notification 4006, media 4007, analytics 4008; frontends on
 3000/3001/3002).

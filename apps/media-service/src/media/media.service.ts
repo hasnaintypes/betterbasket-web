@@ -4,7 +4,7 @@ import ImageKit from "@imagekit/nodejs";
 @Injectable()
 export class MediaService {
   private readonly imagekit = new ImageKit({
-    privateKey: process.env.IMAGEKIT_PRIVATE_KEY ?? "",
+    privateKey: process.env.IMAGEKIT_PRIVATE_KEY!,
   });
 
   /**

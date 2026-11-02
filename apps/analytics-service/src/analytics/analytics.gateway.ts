@@ -9,6 +9,7 @@ import type { Server } from "socket.io";
  * NOTE (Tier 4): connection auth (verifying the JWT on the socket handshake)
  * isn't wired yet; joining rooms must be assigned server-side after verifying the token.
  */
+// Socket.IO CORS and handshake authorization are handled in M15-01; HTTP CORS is disabled here.
 @WebSocketGateway({ cors: { origin: "*" }, namespace: "/realtime" })
 export class AnalyticsGateway {
   @WebSocketServer()

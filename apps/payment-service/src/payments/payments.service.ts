@@ -4,12 +4,12 @@ import Stripe from "stripe";
 import { db } from "../db/client";
 import { payments, type paymentStatusEnum } from "../db/schema";
 
-const PLATFORM_FEE_BPS = Number(process.env.PLATFORM_FEE_BPS ?? 1000); // 10% default
+const PLATFORM_FEE_BPS = Number(process.env.PLATFORM_FEE_BPS);
 
 @Injectable()
 export class PaymentsService {
   private readonly logger = new Logger(PaymentsService.name);
-  private readonly stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? "sk_test_placeholder");
+  private readonly stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
   /** One PaymentIntent per (order, seller) sub-order — see db/schema.ts comment. */
   async createPaymentIntent(
@@ -47,7 +47,7 @@ export class PaymentsService {
     return this.stripe.webhooks.constructEvent(
       rawBody,
       signature,
-      process.env.STRIPE_WEBHOOK_SECRET ?? "",
+      process.env.STRIPE_WEBHOOK_SECRET!,
     );
   }
 

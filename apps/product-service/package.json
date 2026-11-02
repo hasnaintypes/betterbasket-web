@@ -17,6 +17,7 @@
     "@betterbasket/contracts": "workspace:*",
     "@betterbasket/kafka-client": "workspace:*",
     "@betterbasket/logger": "workspace:*",
+    "@betterbasket/runtime": "workspace:*",
     "@betterbasket/utils": "workspace:*",
     "@nestjs/common": "^11.2.3",
     "@nestjs/config": "^4.0.4",

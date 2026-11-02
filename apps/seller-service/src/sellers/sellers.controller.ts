@@ -2,7 +2,7 @@ import { Body, Controller, Get, Post, Query, Req } from "@nestjs/common";
 import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
 import { Auth } from "@betterbasket/auth-shared";
 import { CreateSellerInputSchema, type CreateSellerInput } from "@betterbasket/contracts";
-import { ZodValidationPipe } from "../common/zod-validation.pipe";
+import { ZodValidationPipe } from "@betterbasket/runtime";
 import { SellersService } from "./sellers.service";
 
 interface AuthedRequest {
