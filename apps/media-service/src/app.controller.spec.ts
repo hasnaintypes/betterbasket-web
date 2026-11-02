@@ -1,24 +1,114 @@
-import { Test, type TestingModule } from "@nestjs/testing";
-import { AppController } from "./app.controller";
-import { AppService } from "./app.service";
+import { Module } from "@nestjs/common";
+import { spawn, spawnSync } from "node:child_process";
+import request from "supertest";
+import { getReadinessRegistry } from "@betterbasket/runtime";
+import { bootstrap } from "./main";
+import { mediaEnvSchema } from "./config";
 
-describe("AppController", () => {
-  let controller: AppController;
+jest.setTimeout(60_000);
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      controllers: [AppController],
-      providers: [AppService],
-    }).compile();
+const validEnv = {
+  NODE_ENV: "test",
+  PORT: "4007",
+  AUTH_SERVICE_URL: "http://127.0.0.1:4001",
+  IMAGEKIT_PUBLIC_KEY: "public_test_aaaaaaaaaaaaaaaa",
+  IMAGEKIT_PRIVATE_KEY: "private_test_aaaaaaaaaaaaaaaa",
+  IMAGEKIT_URL_ENDPOINT: "https://ik.imagekit.io/test",
+};
 
-    controller = module.get(AppController);
+@Module({})
+class ProbeModule {}
+
+describe("media-service bootstrap", () => {
+  const originalEnv = { ...process.env };
+  afterEach(() => {
+    process.env = { ...originalEnv };
   });
 
-  describe("health", () => {
-    it("returns ok status with the service name", () => {
-      const result = controller.health();
-      expect(result.status).toBe("ok");
-      expect(typeof result.timestamp).toBe("string");
+  it("exits non-zero and names a missing required variable", () => {
+    const env: NodeJS.ProcessEnv = { ...process.env, ...validEnv };
+    delete env.IMAGEKIT_PRIVATE_KEY;
+    const child = spawnSync(
+      process.execPath,
+      ["-r", "ts-node/register/transpile-only", "src/main.ts"],
+      {
+        cwd: process.cwd(),
+        env,
+        encoding: "utf8",
+        timeout: 10_000,
+      },
+    );
+    expect(child.status).not.toBe(0);
+    expect(child.stderr).toContain("IMAGEKIT_PRIVATE_KEY");
+  });
+
+  it("boots with no HTTP CORS headers and drains readiness on shutdown", async () => {
+    Object.assign(process.env, validEnv);
+    const app = await bootstrap(ProbeModule);
+    try {
+      const server = app.getHttpServer();
+      const health = await request(server).get("/health");
+      expect(health.status).toBe(200);
+      expect(health.body.service).toBe("media-service");
+      expect((await request(server).get("/ready")).status).toBe(200);
+      const preflight = await request(server)
+        .options("/health")
+        .set("Origin", "https://attacker.example");
+      expect(preflight.headers["access-control-allow-origin"]).toBeUndefined();
+      getReadinessRegistry(app).beginShutdown();
+      expect((await request(server).get("/ready")).status).toBe(503);
+    } finally {
+      await app.close();
+    }
+    expect(mediaEnvSchema.safeParse({ ...validEnv, IMAGEKIT_PRIVATE_KEY: undefined }).success).toBe(
+      false,
+    );
+  });
+
+  it("exits within ten seconds of SIGTERM", async () => {
+    const script = `const { Module } = require("@nestjs/common");
+      class ProbeModule {}
+      Module({})(ProbeModule);
+      require("./src/main").bootstrap(ProbeModule).then(() => process.stdout.write("BOOTED\\n"));`;
+    const child = spawn(process.execPath, ["-r", "ts-node/register/transpile-only", "-e", script], {
+      cwd: process.cwd(),
+      env: { ...process.env, ...validEnv },
+      stdio: ["ignore", "pipe", "pipe"],
     });
+    let output = "";
+    const exit = new Promise<{ code: number | null; signal: NodeJS.Signals | null }>((resolve) =>
+      child.once("exit", (code, signal) => resolve({ code, signal })),
+    );
+    const booted = new Promise<void>((resolve, reject) => {
+      child.stdout.on("data", (chunk: Buffer) => {
+        output += chunk.toString();
+        if (output.includes("BOOTED")) resolve();
+      });
+      child.once("exit", () => reject(new Error("Service exited before booting")));
+    });
+    child.stderr.on("data", () => {});
+    const startupTimeout = setTimeout(() => child.kill("SIGKILL"), 45_000);
+    let shutdownTimeout: ReturnType<typeof setTimeout> | undefined;
+    try {
+      await booted;
+      const started = Date.now();
+      child.kill("SIGTERM");
+      const result = await Promise.race([
+        exit,
+        new Promise<never>(
+          (_, reject) =>
+            (shutdownTimeout = setTimeout(
+              () => reject(new Error("SIGTERM shutdown exceeded ten seconds")),
+              10_000,
+            )),
+        ),
+      ]);
+      expect(result.code === 0 || result.signal === "SIGTERM").toBe(true);
+      expect(Date.now() - started).toBeLessThan(10_000);
+    } finally {
+      clearTimeout(startupTimeout);
+      if (shutdownTimeout) clearTimeout(shutdownTimeout);
+      if (child.exitCode === null && child.signalCode === null) child.kill("SIGKILL");
+    }
   });
 });
