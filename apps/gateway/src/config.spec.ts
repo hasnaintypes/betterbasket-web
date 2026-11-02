@@ -1,11 +1,12 @@
 import { createTestApp } from "@betterbasket/test-utils";
 import { AppModule } from "./app.module";
-import { GATEWAY_CONFIG, type GatewayConfig } from "./config";
+import { GATEWAY_CONFIG, gatewayEnvSchema, type GatewayConfig } from "./config";
 
 const testConfig = {
   NODE_ENV: "test",
   PORT: "4000",
   CORS_ALLOWED_ORIGINS: "http://localhost:3000",
+  TRUSTED_PROXY_HOPS: "0",
   AUTH_SERVICE_URL: "http://localhost:4001",
   PRODUCT_SERVICE_URL: "http://localhost:4002",
   SELLER_SERVICE_URL: "http://localhost:4003",
@@ -28,6 +29,11 @@ describe("gateway configuration", () => {
       const config = app.get<GatewayConfig>(GATEWAY_CONFIG);
       expect(config.PORT).toBe(4000);
       expect(config.CORS_ALLOWED_ORIGINS).toEqual(["http://localhost:3000"]);
+      expect(config.TRUSTED_PROXY_HOPS).toBe(0);
+      expect(
+        gatewayEnvSchema.parse({ ...testConfig, NODE_ENV: "production", TRUSTED_PROXY_HOPS: "1" })
+          .TRUSTED_PROXY_HOPS,
+      ).toBe(1);
       expect(Object.isFrozen(config)).toBe(true);
       expect(config.AUTH_SERVICE_URL).toBe(testConfig.AUTH_SERVICE_URL);
     } finally {
@@ -35,3 +41,11 @@ describe("gateway configuration", () => {
     }
   });
 });
+
+it.each([undefined, "", "-1", "1.5", "9", "invalid"])(
+  "rejects invalid TRUSTED_PROXY_HOPS %s",
+  (value) => {
+    const candidate = { ...testConfig, NODE_ENV: "development", TRUSTED_PROXY_HOPS: value };
+    expect(gatewayEnvSchema.safeParse(candidate).success).toBe(false);
+  },
+);

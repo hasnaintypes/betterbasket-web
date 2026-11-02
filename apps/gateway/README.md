@@ -31,3 +31,16 @@ io("https://api.example/realtime", { path: "/realtime", transports: ["websocket"
 ```
 
 The gateway leaves established WebSocket connections open without an HTTP proxy timeout. Clients should use Socket.IO heartbeat and reconnection behavior; deployment idle timeouts must exceed the negotiated ping interval plus ping timeout. Authentication and room assignment are enforced by analytics-service when implemented. HTTP requests under `/internal/*` and `/api/auth/jwks` return 404 at the gateway.
+
+## Rate limits
+
+| Class            | Requests per minute per client IP | Paths                                          |
+| ---------------- | --------------------------------: | ---------------------------------------------- |
+| Default          |                               120 | Other HTTP routes                              |
+| Auth mutations   |                                20 | POST sign-in, sign-up and password reset paths |
+| Webhooks         |                               300 | Stripe account and connect webhook routes      |
+| Realtime connect |                                30 | `/realtime` WebSocket upgrades                 |
+
+Counted HTTP responses carry `RateLimit-Limit`, `RateLimit-Remaining` and `RateLimit-Reset` (seconds until the current window ends); CORS preflight requests are exempt. HTTP requests over the limit return a 429 `RATE_LIMITED` envelope and `Retry-After`; over-limit WebSocket upgrades receive a 429 handshake response. CORS exposes these headers to allowed browser origins.
+
+Set `TRUSTED_PROXY_HOPS` to the number of verified platform proxies that append to `X-Forwarded-For` (`0` for direct local access). Only those rightmost hops influence the client IP. The current store is bounded and in memory, so counters are per gateway instance. Store errors allow requests through and increment a warning counter in logs. A shared store is planned separately.

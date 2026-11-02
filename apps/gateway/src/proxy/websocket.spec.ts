@@ -1,8 +1,9 @@
 import { Module } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import { createStubUpstream } from "@betterbasket/test-utils";
-import { createServer } from "node:http";
+import { createServer, request as httpRequest } from "node:http";
 import { once } from "node:events";
+import { randomBytes } from "node:crypto";
 import { Server as SocketServer } from "socket.io";
 import { io } from "socket.io-client";
 import supertest from "supertest";
@@ -10,6 +11,8 @@ import type { GatewayConfig } from "../config";
 import { registerBlockedPaths } from "./blocked";
 import { registerProxies, registerWebSocketUpgrades } from "./register-proxies";
 import { routes } from "./routes";
+import { InMemoryRateLimitStore } from "../ratelimit/store";
+import { RateLimiter } from "../ratelimit/limiter";
 
 @Module({})
 class EmptyModule {}
@@ -42,18 +45,21 @@ async function fixture() {
     ...config,
     ANALYTICS_SERVICE_URL: `http://127.0.0.1:${analyticsAddress.port}`,
     CORS_ALLOWED_ORIGINS: ["https://allowed.example"],
+    TRUSTED_PROXY_HOPS: 0,
   };
+  const limiter = new RateLimiter(new InMemoryRateLimitStore());
   const app = await NestFactory.create(EmptyModule, { logger: false });
   registerBlockedPaths(app);
   registerProxies(app, completeConfig);
   await app.listen(0, "127.0.0.1");
-  registerWebSocketUpgrades(app.getHttpServer(), completeConfig);
+  registerWebSocketUpgrades(app.getHttpServer(), completeConfig, limiter);
   const gatewayAddress = app.getHttpServer().address();
   if (!gatewayAddress || typeof gatewayAddress === "string") throw new Error("No gateway port");
   return {
     base: `http://127.0.0.1:${gatewayAddress.port}`,
     client: supertest(app.getHttpServer()),
     stub,
+    limiter,
     connections: () => connections,
     handshakeUrl: () => handshakeUrl,
     close: async () => {
@@ -121,6 +127,45 @@ describe("gateway WebSocket upgrades and blocked paths", () => {
       expect(gateway.connections()).toBe(0);
     } finally {
       client.disconnect();
+      await gateway.close();
+    }
+  });
+
+  it("returns 429 on the 31st realtime upgrade", async () => {
+    const gateway = await fixture();
+    try {
+      for (let i = 0; i < 30; i++)
+        expect((await gateway.limiter.check("realtime-connect", "127.0.0.1"))?.allowed).toBe(true);
+      const response = await new Promise<{ status: number; headers: Record<string, unknown> }>(
+        (resolve, reject) => {
+          const request = httpRequest(
+            {
+              hostname: "127.0.0.1",
+              port: new URL(gateway.base).port,
+              path: "/realtime/?EIO=4&transport=websocket",
+              headers: {
+                Connection: "Upgrade",
+                Upgrade: "websocket",
+                Origin: "https://allowed.example",
+                "Sec-WebSocket-Key": randomBytes(16).toString("base64"),
+                "Sec-WebSocket-Version": "13",
+              },
+            },
+            (result) => {
+              result.resume();
+              resolve({ status: result.statusCode ?? 0, headers: result.headers });
+            },
+          );
+          request.on("upgrade", () => reject(new Error("Unexpected upgrade")));
+          request.on("error", reject);
+          request.end();
+        },
+      );
+      expect(response.status).toBe(429);
+      expect(response.headers["ratelimit-limit"]).toBe("30");
+      expect(response.headers["retry-after"]).toBeDefined();
+      expect(gateway.connections()).toBe(0);
+    } finally {
       await gateway.close();
     }
   });
