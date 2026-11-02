@@ -1,13 +1,13 @@
 import { Body, Controller, Get, Param, Post, Query, Req } from "@nestjs/common";
 import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
 import { Auth } from "@betterbasket/auth-shared";
+import { ZodValidationPipe } from "@betterbasket/runtime";
 import {
   CreateProductInputSchema,
   PaginationQuerySchema,
   type CreateProductInput,
   type PaginationQuery,
 } from "@betterbasket/contracts";
-import { ZodValidationPipe } from "../common/zod-validation.pipe";
 import { ProductsService } from "./products.service";
 
 @ApiTags("products")

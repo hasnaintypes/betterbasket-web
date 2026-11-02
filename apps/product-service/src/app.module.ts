@@ -11,9 +11,7 @@ import { ProductsModule } from "./products/products.module";
       isGlobal: true,
       envFilePath: [`.env.${process.env.NODE_ENV ?? "development"}`, ".env"],
     }),
-    MongooseModule.forRoot(
-      process.env.MONGODB_URI ?? "mongodb://localhost:27017/betterbasket_products",
-    ),
+    MongooseModule.forRoot(process.env.MONGODB_URI!),
     ProductsModule,
   ],
   controllers: [AppController],
