@@ -103,6 +103,9 @@ importers:
       '@betterbasket/logger':
         specifier: workspace:*
         version: link:../../packages/logger
+      '@betterbasket/runtime':
+        specifier: workspace:*
+        version: link:../../packages/runtime
       '@nestjs/common':
         specifier: ^11.2.3
         version: 11.2.3(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -139,6 +142,9 @@ importers:
       socket.io:
         specifier: ^4.8.0
         version: 4.8.3
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
     devDependencies:
       '@betterbasket/config':
         specifier: workspace:*
@@ -400,6 +406,9 @@ importers:
       '@betterbasket/logger':
         specifier: workspace:*
         version: link:../../packages/logger
+      '@betterbasket/runtime':
+        specifier: workspace:*
+        version: link:../../packages/runtime
       '@imagekit/nodejs':
         specifier: ^7.11.0
         version: 7.11.0
@@ -430,6 +439,9 @@ importers:
       rxjs:
         specifier: ^7.8.1
         version: 7.8.2
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
     devDependencies:
       '@betterbasket/config':
         specifier: workspace:*
@@ -485,6 +497,9 @@ importers:
       '@betterbasket/logger':
         specifier: workspace:*
         version: link:../../packages/logger
+      '@betterbasket/runtime':
+        specifier: workspace:*
+        version: link:../../packages/runtime
       '@nestjs/common':
         specifier: ^11.2.3
         version: 11.2.3(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -515,6 +530,9 @@ importers:
       rxjs:
         specifier: ^7.8.1
         version: 7.8.2
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
     devDependencies:
       '@betterbasket/config':
         specifier: workspace:*
@@ -573,6 +591,9 @@ importers:
       '@betterbasket/logger':
         specifier: workspace:*
         version: link:../../packages/logger
+      '@betterbasket/runtime':
+        specifier: workspace:*
+        version: link:../../packages/runtime
       '@nestjs/common':
         specifier: ^11.2.3
         version: 11.2.3(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -676,6 +697,9 @@ importers:
       '@betterbasket/logger':
         specifier: workspace:*
         version: link:../../packages/logger
+      '@betterbasket/runtime':
+        specifier: workspace:*
+        version: link:../../packages/runtime
       '@nestjs/common':
         specifier: ^11.2.3
         version: 11.2.3(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -712,6 +736,9 @@ importers:
       stripe:
         specifier: ^22.6.1
         version: 22.6.1(@types/node@22.20.1)
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
     devDependencies:
       '@betterbasket/config':
         specifier: workspace:*
@@ -779,6 +806,9 @@ importers:
       '@betterbasket/logger':
         specifier: workspace:*
         version: link:../../packages/logger
+      '@betterbasket/runtime':
+        specifier: workspace:*
+        version: link:../../packages/runtime
       '@betterbasket/utils':
         specifier: workspace:*
         version: link:../../packages/utils
@@ -928,6 +958,9 @@ importers:
       '@betterbasket/logger':
         specifier: workspace:*
         version: link:../../packages/logger
+      '@betterbasket/runtime':
+        specifier: workspace:*
+        version: link:../../packages/runtime
       '@betterbasket/utils':
         specifier: workspace:*
         version: link:../../packages/utils
