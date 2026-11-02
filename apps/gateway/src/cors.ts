@@ -31,7 +31,7 @@ export function configureCors(app: INestApplication, config: GatewayConfig): voi
     credentials: true,
     methods: "GET,POST,PUT,PATCH,DELETE,OPTIONS",
     allowedHeaders: "Authorization,Content-Type,Idempotency-Key,X-Request-Id",
-    exposedHeaders: "X-Request-Id,RateLimit-*,Retry-After",
+    exposedHeaders: "X-Request-Id,RateLimit-Limit,RateLimit-Remaining,RateLimit-Reset,Retry-After",
     maxAge: 600,
   });
 }

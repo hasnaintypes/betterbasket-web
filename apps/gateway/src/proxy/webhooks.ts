@@ -102,7 +102,7 @@ export function registerWebhooks(app: INestApplication, config: GatewayConfig): 
         const responseHeaders = { ...upstreamRes.headers } as Record<string, unknown>;
         stripHeaders(responseHeaders, upstreamRes.headers.connection);
         for (const [name, value] of Object.entries(responseHeaders))
-          if (value !== undefined && name !== "x-request-id")
+          if (value !== undefined && name !== "x-request-id" && !name.startsWith("ratelimit-"))
             res.setHeader(name, value as string | string[]);
         for (const [name, value] of Object.entries(securityHeaders)) res.setHeader(name, value);
         res.setHeader("X-Request-Id", requestId);

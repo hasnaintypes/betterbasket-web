@@ -7,6 +7,8 @@ import { acceptedRequestId, getRequestId, getRequestLogger } from "@betterbasket
 import type { GatewayConfig } from "../config";
 import { securityHeaders } from "../cors";
 import { routes } from "./routes";
+import { trustedClientIp } from "../ratelimit/client-ip";
+import { RateLimiter, rateLimitHeaders } from "../ratelimit/limiter";
 
 const hopHeaders = [
   "connection",
@@ -123,6 +125,9 @@ export function registerProxies(app: INestApplication, config: GatewayConfig): v
           proxyRes: (proxyRes, req) => {
             proxyStartedAt.delete(req);
             stripHopHeaders(proxyRes.headers, proxyRes.headers.connection);
+            delete proxyRes.headers["ratelimit-limit"];
+            delete proxyRes.headers["ratelimit-remaining"];
+            delete proxyRes.headers["ratelimit-reset"];
             Object.assign(proxyRes.headers, securityHeaders);
             if (route.prefix === "/api/auth") proxyRes.headers["cache-control"] = "no-store";
             proxyRes.headers["x-request-id"] =
@@ -155,7 +160,11 @@ export function registerProxies(app: INestApplication, config: GatewayConfig): v
 }
 
 /** Upgrade URLs retain their public prefix; analytics uses Socket.IO's /socket.io engine path. */
-export function registerWebSocketUpgrades(server: Server, config: GatewayConfig): void {
+export function registerWebSocketUpgrades(
+  server: Server,
+  config: GatewayConfig,
+  limiter: RateLimiter,
+): void {
   const proxy = createProxyMiddleware({
     target: config.ANALYTICS_SERVICE_URL,
     changeOrigin: true,
@@ -184,6 +193,27 @@ export function registerWebSocketUpgrades(server: Server, config: GatewayConfig)
       socket.destroy();
       return;
     }
-    proxy.upgrade(req, socket as Socket, head);
+    const ip = trustedClientIp(
+      req.socket.remoteAddress,
+      req.headers["x-forwarded-for"],
+      config.TRUSTED_PROXY_HOPS,
+    );
+    void limiter
+      .check("realtime-connect", ip)
+      .then((decision) => {
+        if (decision && !decision.allowed) {
+          const requestId = acceptedRequestId(req.headers["x-request-id"]) ?? randomUUID();
+          const body = JSON.stringify({
+            error: { code: "RATE_LIMITED", message: "Too many requests", requestId, details: [] },
+          });
+          const headers = rateLimitHeaders(decision);
+          socket.end(
+            `HTTP/1.1 429 Too Many Requests\r\nConnection: close\r\nContent-Type: application/json\r\nContent-Length: ${Buffer.byteLength(body)}\r\nX-Request-Id: ${requestId}\r\nRetry-After: ${decision.resetSeconds}\r\nRateLimit-Limit: ${headers["RateLimit-Limit"]}\r\nRateLimit-Remaining: ${headers["RateLimit-Remaining"]}\r\nRateLimit-Reset: ${headers["RateLimit-Reset"]}\r\n\r\n${body}`,
+          );
+          return;
+        }
+        proxy.upgrade(req, socket as Socket, head);
+      })
+      .catch(() => socket.destroy());
   });
 }

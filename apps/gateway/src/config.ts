@@ -7,6 +7,11 @@ export const gatewayEnvSchema = z.object({
   ENABLE_DOCS: bool().optional(),
   GIT_SHA: z.string().min(1).optional(),
   CORS_ALLOWED_ORIGINS: csv().pipe(z.array(url()).min(1)),
+  TRUSTED_PROXY_HOPS: z
+    .string()
+    .regex(/^(0|[1-9]\d*)$/)
+    .transform(Number)
+    .pipe(z.number().int().max(8)),
   AUTH_SERVICE_URL: url(),
   PRODUCT_SERVICE_URL: url(),
   SELLER_SERVICE_URL: url(),
