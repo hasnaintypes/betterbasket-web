@@ -9,12 +9,14 @@
     "start": "node dist/main.js",
     "lint": "eslint . --max-warnings=0",
     "type-check": "tsc --noEmit",
-    "test": "pnpm build && node --test test/*.test.mjs",
+    "test": "pnpm build && pnpm auth:check-schema && pnpm db:check && node --test test/*.test.mjs",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "auth:generate-schema": "better-auth generate --config src/auth/auth.cli.ts",
-    "auth:create-admin": "better-auth create-admin --config src/auth/auth.cli.ts"
+    "db:check": "drizzle-kit check",
+    "auth:generate-schema": "node scripts/generate-auth-schema.mjs --write",
+    "auth:check-schema": "node scripts/generate-auth-schema.mjs --check",
+    "auth:create-admin": "auth create-admin --config src/auth/auth.cli.ts"
   },
   "dependencies": {
     "@betterbasket/contracts": "workspace:*",
@@ -43,6 +45,7 @@
     "@types/node": "^22.7.4",
     "@types/pg": "^8.11.10",
     "@types/supertest": "^6.0.2",
+    "auth": "1.7.14",
     "dotenv": "^16.4.5",
     "drizzle-kit": "^0.31.10",
     "eslint": "^10.10.0",
