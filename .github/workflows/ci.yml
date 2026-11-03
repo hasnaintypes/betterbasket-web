@@ -113,10 +113,14 @@ jobs:
         if: github.event_name == 'pull_request'
         run: pnpm --filter @betterbasket/contracts schemas:diff "origin/${{ github.base_ref }}"
 
+  auth-migrations:
+    uses: ./.github/workflows/migrations.yml
+    secrets: inherit
+
   # The only check that branch protection should require. It cannot be skipped: it always runs and
   # fails unless every job it depends on actually succeeded (a failed, cancelled or skipped job fails the gate).
   ci-gate:
-    needs: [changes, verify, contracts]
+    needs: [changes, verify, contracts, auth-migrations]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -125,7 +129,8 @@ jobs:
           echo "changes: ${{ needs.changes.result }}"
           echo "verify:  ${{ needs.verify.result }}"
           echo "contracts: ${{ needs.contracts.result }}"
-          if [ "${{ needs.changes.result }}" != "success" ] || [ "${{ needs.verify.result }}" != "success" ] || [ "${{ needs.contracts.result }}" != "success" ]; then
+          echo "auth-migrations: ${{ needs.auth-migrations.result }}"
+          if [ "${{ needs.changes.result }}" != "success" ] || [ "${{ needs.verify.result }}" != "success" ] || [ "${{ needs.contracts.result }}" != "success" ] || [ "${{ needs.auth-migrations.result }}" != "success" ]; then
             echo "::error::A required job did not succeed (failed, cancelled or skipped)."
             exit 1
           fi

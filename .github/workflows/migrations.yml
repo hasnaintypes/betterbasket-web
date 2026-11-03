@@ -1,0 +1,73 @@
+name: Auth migrations
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  auth-migrations:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+      NEON_DEV_PROJECT_ID: ${{ vars.NEON_DEV_PROJECT_ID }}
+      CI_BRANCH: dev-ci-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Require approved free Neon development project
+        run: |
+          if [ -z "$NEON_API_KEY" ] || [ -z "$NEON_DEV_PROJECT_ID" ]; then
+            echo "::error::Configure NEON_API_KEY secret and NEON_DEV_PROJECT_ID variable for the free development test project."
+            exit 1
+          fi
+
+      - name: Install dependencies and Neon CLI
+        run: |
+          pnpm install --frozen-lockfile
+          npm install --global neon@8.16.0 --no-audit --no-fund
+
+      - name: Confirm development project
+        run: |
+          neon project get "$NEON_DEV_PROJECT_ID" --output json --no-color > /tmp/neon-project.json
+          node -e '
+            const result = require("/tmp/neon-project.json");
+            const project = result.project ?? result;
+            if (project.id !== process.env.NEON_DEV_PROJECT_ID ||
+                !/(^|[-_ ])dev(elopment)?($|[-_ ])/i.test(project.name || "") ||
+                /(^|[-_ ])(?:stage|staging|prod|production)($|[-_ ])/i.test(project.name || "")) {
+              throw new Error("Neon migration project must be a dedicated development project");
+            }
+          '
+
+      - name: Create expiring migration branch
+        id: branch
+        run: |
+          expires_at=$(date -u -d '+2 hours' '+%Y-%m-%dT%H:%M:%SZ')
+          neon branch create --project-id "$NEON_DEV_PROJECT_ID" --name "$CI_BRANCH" --expires-at "$expires_at" --no-secrets --output json --no-color > /tmp/neon-branch.json
+
+      - name: Apply and check migrations
+        run: |
+          printf '%s\n' "$NEON_DEV_PROJECT_ID" > .dev-projects
+          node scripts/dev-bootstrap.mjs --project-id "$NEON_DEV_PROJECT_ID" --branch "$CI_BRANCH" --service auth --runtime-role bb_auth_ci_app --migrator-role neondb_owner --existing --migrate
+          pnpm --filter auth-service db:migrate
+          pnpm --filter auth-service db:check
+          pnpm --filter auth-service auth:check-schema
+
+      - name: Verify sign-up against migrated schema
+        run: |
+          pnpm --filter auth-service build
+          node apps/auth-service/scripts/migration-smoke.mjs
+
+      - name: Remove migration branch
+        if: always() && steps.branch.outcome == 'success'
+        continue-on-error: true
+        run: neon branch delete "$CI_BRANCH" --project-id "$NEON_DEV_PROJECT_ID" --output json --no-color > /dev/null
