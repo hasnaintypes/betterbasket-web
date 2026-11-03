@@ -66,27 +66,75 @@ betterbasket-ecommerce/
 
 ## Local development — no Docker required
 
-Every datastore/broker is a real cloud service (free tiers for development),
-not a local container. You need accounts on Neon (Postgres), MongoDB Atlas,
-Upstash (Redis), Redpanda Cloud (Kafka API), Stripe (test mode) and ImageKit;
-each service's `.env.development.example` lists exactly which connection
-strings and keys to fill in. Use separate projects/credentials per developer
-and never commit real `.env.*` files (they are git-ignored).
+Every datastore/broker is a cloud service, not a local container. You need
+development accounts on Neon (Postgres), MongoDB Atlas, Upstash (Redis),
+Redpanda Cloud (Kafka API), Stripe (test mode), and ImageKit. Each service's
+`.env.development.example` lists its settings. Never commit real `.env.*`
+files or `.dev-projects`; both are git-ignored.
+
+For Postgres, create a **Free** Neon development project with `dev` or
+`development` in its name in the Neon Console, separate from staging and
+production. Each developer gets a branch; each service gets its own database
+(`bb_auth`, `bb_seller`, `bb_order`, or `bb_payment`) on that branch. Copy the
+project's ID from its dashboard into
+the local allow-list (one ID per line). Install the [Neon CLI](https://neon.com/docs/reference/neon-cli)
+and authenticate with `neon auth`, or set `NEON_API_KEY` in your shell. The CLI
+creates a developer branch with a compute and the selected service database.
+The bootstrap creates a restricted runtime role with SQL on that branch; the
+project's owner role is used only for migrations. Roles created through Neon's Console or CLI have elevated
+`neon_superuser` membership, so do not use one as the runtime role.
 
 ```bash
 pnpm install
+DEV_PROJECT_ID=your-approved-free-dev-project-id
+DEV_BRANCH=dev-your-name
+printf '%s\n' "$DEV_PROJECT_ID" > .dev-projects
 
-# Fill in each service's env — copy the example, then paste real dev credentials
-cp apps/auth-service/.env.development.example apps/auth-service/.env.development
-# ...repeat for every service/app you're running (see each .env.*.example)
+# Review the actions first; no cloud calls or files are changed.
+node scripts/dev-bootstrap.mjs --project-id "$DEV_PROJECT_ID" --branch "$DEV_BRANCH" --runtime-role bb_auth_app --migrator-role neondb_owner --dry-run
 
-# Generate + apply the Better Auth schema (Postgres, via Neon)
-pnpm --filter auth-service auth:generate-schema
-pnpm --filter auth-service db:migrate
+# Create the branch and configure apps/auth-service/.env.development.
+node scripts/dev-bootstrap.mjs --project-id "$DEV_PROJECT_ID" --branch "$DEV_BRANCH" --runtime-role bb_auth_app --migrator-role neondb_owner
+
+# Fill in the remaining settings in the generated auth env and copy other
+# service/app examples as needed (see each .env.development.example).
 
 # Run everything (or use --filter to run just what you're working on)
 pnpm turbo dev
 ```
+
+Use `--service seller`, `--service order`, or `--service payment` with the same
+approved project and developer branch, adding `--existing` after the first
+service has created the branch. Give each service its own runtime role name.
+Branch names must start with `dev-`. The bootstrap rejects IDs missing from `.dev-projects`,
+checks that runtime and migration URLs belong to the same Neon endpoint, and
+never prints connection strings. The pooled `-pooler` host is for application
+traffic; the direct host is for Drizzle migrations, which need session features.
+`DATABASE_URL` and `DIRECT_DATABASE_URL` are written to the service's
+`.env.development` with private file permissions. A repeated setup can use
+`--existing --manual` with its existing URLs.
+
+If the CLI is unavailable, create a branch and the selected `bb_<service>`
+database in the approved project in the Neon Console, then create a runtime
+role through **SQL**, granting only the
+schema usage and table/sequence DML permissions the service needs. Keep the
+owner role for migrations. Place the pooled runtime URL in `NEON_RUNTIME_URL`
+and the direct migrator URL in `NEON_DIRECT_URL` in your shell environment,
+then run the same bootstrap command with `--manual --existing`. The script
+validates the URLs before writing them. Do not paste URLs into shell commands,
+issue comments, logs, or the repository.
+
+The first auth schema and committed migrations are tracked in [issue #18](https://github.com/hasnaintypes/betterbasket-web/issues/18).
+Once migrations exist, add `--migrate` to apply them through the direct URL;
+`--seed` becomes available when a service adds a `db:seed` script. Grant the
+runtime role DML rights after migrations and verify its DDL rights remain
+absent. Until then, the new runtime role intentionally has no application
+table access. As of November 2026, Neon Free allows 10 branches per project
+and a six-hour instant restore window; compute suspends after five minutes of
+inactivity by default, so the first connection can be slower. Check the
+[current Free plan limits](https://neon.com/pricing) before creating
+more branches. If a branch limit is reached, remove an unused development
+branch or use an existing one; never upgrade to a paid plan as part of setup.
 
 Each service exposes `GET /health` (liveness) and `GET /ready` (readiness). Swagger UI is available at `/docs` outside production, or in production only when `ENABLE_DOCS=true`.
 (ports: gateway 4000, auth 4001, product 4002, seller 4003, order 4004,

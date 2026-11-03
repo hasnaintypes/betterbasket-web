@@ -44,6 +44,9 @@ export function checkApp(appDir) {
   const configPath = join(appDir, "src/config.ts");
   if (!existsSync(configPath)) return [];
   const expected = schemaKeys(readFileSync(configPath, "utf8"));
+  const migrationOnly = existsSync(join(appDir, "drizzle.config.ts"))
+    ? ["DIRECT_DATABASE_URL"]
+    : [];
   const errors = [];
   for (const environment of ["development", "production"]) {
     const examplePath = join(appDir, `.env.${environment}.example`);
@@ -53,7 +56,7 @@ export function checkApp(appDir) {
     }
     const actual = exampleKeys(readFileSync(examplePath, "utf8"));
     const missing = expected.filter((key) => !actual.includes(key));
-    const extra = actual.filter((key) => !expected.includes(key));
+    const extra = actual.filter((key) => !expected.includes(key) && !migrationOnly.includes(key));
     const duplicate = actual.filter((key, index) => actual.indexOf(key) !== index);
     if (missing.length || extra.length || duplicate.length) {
       errors.push(
