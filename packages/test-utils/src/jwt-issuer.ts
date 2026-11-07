@@ -35,16 +35,17 @@ export async function createJwtTestIssuer() {
       return new SignJWT({
         sub: claims.sub ?? "test-user-1",
         email: claims.email ?? "user@example.test",
-        role: claims.role ?? "customer",
-        ...(claims.activeOrganizationId
-          ? { activeOrganizationId: claims.activeOrganizationId }
-          : {}),
+        emailVerified: claims.emailVerified ?? true,
+        platformRole: claims.platformRole ?? "customer",
+        orgId: claims.orgId ?? null,
+        orgRole: claims.orgRole ?? null,
       })
         .setProtectedHeader({ alg: "EdDSA", kid })
         .setIssuer(issuer)
         .setAudience(issuer)
         .setIssuedAt()
         .setExpirationTime("1h")
+        .setJti(claims.jti ?? randomUUID())
         .sign(privateKey);
     },
     async close() {

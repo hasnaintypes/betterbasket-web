@@ -15,7 +15,7 @@ export class SellersController {
   constructor(private readonly sellersService: SellersService) {}
 
   @Post("onboard")
-  @Auth("customer", "seller")
+  @Auth("customer", "admin")
   @ApiBearerAuth()
   onboard(
     @Req() req: AuthedRequest,
@@ -30,14 +30,14 @@ export class SellersController {
   }
 
   @Get("me")
-  @Auth("seller")
+  @Auth("customer", "admin")
   @ApiBearerAuth()
   me(@Req() req: AuthedRequest) {
     return this.sellersService.findByOrganization(req.user.activeOrganizationId ?? "");
   }
 
   @Post("me/onboarding-link")
-  @Auth("seller")
+  @Auth("customer", "admin")
   @ApiBearerAuth()
   onboardingLink(
     @Req() req: AuthedRequest,

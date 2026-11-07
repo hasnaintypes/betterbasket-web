@@ -70,14 +70,16 @@ test("JWT issuer verifies v2 claims and rejects tampering", async () => {
   try {
     const token = await issuer.sign({
       sub: "user-42",
-      role: "seller",
-      activeOrganizationId: "org-7",
+      platformRole: "customer",
+      orgId: "org-7",
+      orgRole: "owner",
     });
     const verifier = new JwksVerifier(issuer.issuer, issuer.jwksUrl);
     const claims = await verifier.verify(token);
     assert.equal(claims.sub, "user-42");
-    assert.equal(claims.role, "seller");
-    assert.equal(claims.activeOrganizationId, "org-7");
+    assert.equal(claims.platformRole, "customer");
+    assert.equal(claims.orgId, "org-7");
+    assert.equal(claims.orgRole, "owner");
     const [header, payload, signature] = token.split(".");
     const modified = Buffer.from(
       JSON.stringify({

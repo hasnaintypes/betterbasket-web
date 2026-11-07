@@ -26,7 +26,7 @@ export class ProductsController {
   }
 
   @Post()
-  @Auth("seller")
+  @Auth("customer", "admin")
   @ApiBearerAuth()
   create(
     @Req() req: { user: { sub: string; activeOrganizationId?: string | null } },
