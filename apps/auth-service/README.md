@@ -56,12 +56,16 @@ Do not grant schema `CREATE`, database `CREATE`, `CREATEROLE`, or
 `neon_superuser` membership to the runtime role. The migrator URL must not be
 used by the running auth service.
 
-## CI migration smoke
+## Neon migration smoke
 
-`.github/workflows/migrations.yml` creates an expiring branch in the approved
-Free development project, migrates twice, checks the schema, signs up a
-synthetic user, verifies its row and password hash, and deletes the branch.
-The required CI gate needs the repository secret `NEON_API_KEY` and variable
-`NEON_DEV_PROJECT_ID`. The project must be separate
-from staging and production, contain only synthetic data, and have `dev` or
-`development` in its name. The job never prints connection strings.
+`.github/workflows/migrations.yml` can be run manually once GitHub Actions is
+available and configured. It creates an expiring branch in the approved Free
+development project, migrates twice, checks the schema, signs up a synthetic
+user, verifies its row and password hash, and deletes the branch. It needs the
+repository secret `NEON_API_KEY` and variable `NEON_DEV_PROJECT_ID`. The project
+must be separate from staging and production, contain only synthetic data, and
+have `dev` or `development` in its name. The job never prints connection strings.
+
+The same checks can be run locally through an authenticated Neon CLI session
+using an approved development project. Local CLI login does not require a
+GitHub repository secret.
