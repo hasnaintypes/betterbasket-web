@@ -13,7 +13,7 @@ import { JwksVerifier, createJwksVerifierFromEnv } from "./jwks-verifier.js";
 
 const ROLES_KEY = "betterbasket:roles";
 
-/** Restricts a controller/handler to one or more platform roles (customer/seller/admin). */
+/** Restricts a controller/handler to one or more platform roles (customer/admin). */
 export const Roles = (...roles: PlatformRole[]) => SetMetadata(ROLES_KEY, roles);
 
 /**
@@ -58,14 +58,14 @@ export class RolesGuard implements CanActivate {
     if (required.length === 0) return true;
 
     const { user } = context.switchToHttp().getRequest();
-    if (!user || !required.includes(user.role)) {
+    if (!user || !required.includes(user.platformRole)) {
       throw new ForbiddenException(`Requires one of roles: ${required.join(", ")}`);
     }
     return true;
   }
 }
 
-/** Convenience: `@Auth("seller", "admin")` = JwtAuthGuard + RolesGuard + @Roles(...) in one decorator. */
+/** Convenience: `@Auth("customer", "admin")` = JwtAuthGuard + RolesGuard + @Roles(...) in one decorator. */
 export function Auth(...roles: PlatformRole[]) {
   return applyDecorators(UseGuards(JwtAuthGuard, RolesGuard), Roles(...roles));
 }

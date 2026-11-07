@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { PlatformRoleSchema } from "./common.js";
+import { OrgRoleSchema, PlatformRoleSchema } from "./common.js";
 
 /** Mirrors the subset of Better Auth's `user` table fields shared across services via JWT claims. */
 export const UserSchema = z.object({
@@ -16,13 +16,16 @@ export type User = z.infer<typeof UserSchema>;
 
 /** Decoded shape of the JWT issued by auth-service's `jwt` plugin (verified via JWKS). */
 export const AuthTokenClaimsSchema = z.object({
-  sub: z.string(), // user id
+  sub: z.string(),
   email: z.string().email(),
-  role: PlatformRoleSchema,
-  activeOrganizationId: z.string().nullish(),
+  emailVerified: z.boolean(),
+  platformRole: PlatformRoleSchema,
+  orgId: z.string().nullable(),
+  orgRole: OrgRoleSchema.nullable(),
   iss: z.string(),
   aud: z.string(),
-  exp: z.number(),
   iat: z.number(),
+  exp: z.number(),
+  jti: z.string(),
 });
 export type AuthTokenClaims = z.infer<typeof AuthTokenClaimsSchema>;

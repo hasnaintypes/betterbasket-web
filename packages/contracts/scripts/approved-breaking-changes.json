@@ -1,0 +1,18 @@
+{
+  "issue": 19,
+  "reason": "Internal v2 token claims and platform role migration; all consumers are in this monorepo.",
+  "snapshots": {
+    "AuthTokenClaimsSchema.json": {
+      "before": "30c6097ff0c1b749ba84e5f219729585c769bee1375dcb6f1d407b4105f1c12e",
+      "after": "8a3115145478157d8838f88a48012be994122d42f7724467a387586fea7bac18"
+    },
+    "PlatformRoleSchema.json": {
+      "before": "8c95027c61037dc23dedf68b7dc845b89e4795a43ee0204eef2dc43857c10fd3",
+      "after": "25391b0a10e1408bb142f4a28a0c8cd45c77d6037ee3ad01f1eea1176ec0f460"
+    },
+    "UserSchema.json": {
+      "before": "2aff5e7cca66014c17f4c348ab7c029be932ade3bf5b25af71d1c7c8cd9291cd",
+      "after": "c2847d00b942f41e1ed1dc2bcd7ccac9ce52f4c2659c594cd3844e7318145db5"
+    }
+  }
+}

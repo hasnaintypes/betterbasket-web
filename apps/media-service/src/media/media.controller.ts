@@ -9,7 +9,7 @@ export class MediaController {
   constructor(private readonly mediaService: MediaService) {}
 
   @Get("upload-auth")
-  @Auth("seller", "customer", "admin")
+  @Auth("customer", "admin")
   @ApiBearerAuth()
   getUploadAuth() {
     return this.mediaService.getUploadAuthParams();
