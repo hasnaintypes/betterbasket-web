@@ -22,9 +22,27 @@ export const PaginatedResultSchema = <T extends z.ZodTypeAny>(item: T) =>
   });
 
 /** Platform-wide roles, managed by Better Auth's `admin` plugin (see auth-service). */
-export const PlatformRoleSchema = z.enum(["customer", "seller", "admin"]);
+export const PlatformRoleSchema = z.enum(["customer", "admin"]);
 export type PlatformRole = z.infer<typeof PlatformRoleSchema>;
 
 /** Roles inside a seller "organization" (Better Auth `organization` plugin). */
 export const OrgRoleSchema = z.enum(["owner", "admin", "member"]);
 export type OrgRole = z.infer<typeof OrgRoleSchema>;
+
+/** Named permissions checked by the capability guards. */
+export const CapabilitySchema = z.enum([
+  "product:read",
+  "product:write",
+  "product:publish",
+  "order:read",
+  "order:fulfil",
+  "order:cancel",
+  "seller:read",
+  "seller:write",
+  "stripe:manage",
+  "payout:read",
+  "member:manage",
+  "media:upload",
+  "admin:*",
+]);
+export type Capability = z.infer<typeof CapabilitySchema>;

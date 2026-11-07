@@ -40,8 +40,7 @@
       "default": "customer",
       "enum": [
         "admin",
-        "customer",
-        "seller"
+        "customer"
       ],
       "type": "string"
     }

@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "enum": [
+    "admin:*",
+    "media:upload",
+    "member:manage",
+    "order:cancel",
+    "order:fulfil",
+    "order:read",
+    "payout:read",
+    "product:publish",
+    "product:read",
+    "product:write",
+    "seller:read",
+    "seller:write",
+    "stripe:manage"
+  ],
+  "type": "string"
+}
