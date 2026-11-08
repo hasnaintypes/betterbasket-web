@@ -8,10 +8,14 @@ const serviceDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const target = join(serviceDir, "src", "db", "schema.auth.ts");
 
 export function normalizeGeneratedSchema(schema) {
-  const importLine =
-    'import { pgTable, text, timestamp, boolean, index } from "drizzle-orm/pg-core";';
-  if (!schema.includes(importLine)) throw new Error("Unexpected Better Auth schema imports");
-  let result = schema.replace(importLine, importLine.replace("index }", "index, uniqueIndex }"));
+  const importBlock = schema.match(/import \{[\s\S]*?\} from "drizzle-orm\/pg-core";/)?.[0];
+  if (!importBlock || !/\bindex,(?=\s*\})/.test(importBlock))
+    throw new Error("Unexpected Better Auth schema imports");
+  const separator = importBlock.includes("\n") ? "\n  " : " ";
+  let result = schema.replace(
+    importBlock,
+    importBlock.replace(/\bindex,(?=\s*\})/, `index,${separator}uniqueIndex,`),
+  );
   result = result.replace(/timestamp\("([a-z_]+)"\)/g, 'timestamp("$1", { withTimezone: true })');
   const memberIndex = 'index("member_userId_idx").on(table.userId),';
   if (!result.includes(memberIndex)) throw new Error("Expected member index is missing");
@@ -32,7 +36,22 @@ export function main(argv = process.argv.slice(2)) {
     execFileSync(
       "pnpm",
       ["exec", "auth", "generate", "--config", "src/auth/auth.cli.ts", "--output", output, "--yes"],
-      { cwd: serviceDir, stdio: ["ignore", "pipe", "pipe"], timeout: 60_000 },
+      {
+        cwd: serviceDir,
+        stdio: ["ignore", "pipe", "pipe"],
+        timeout: 60_000,
+        env: {
+          ...process.env,
+          NODE_ENV: "development",
+          PORT: "4001",
+          ENABLE_DOCS: "false",
+          GIT_SHA: "schema-generation",
+          BASE_URL: "http://localhost:4000",
+          TRUSTED_ORIGINS: "http://localhost:3000",
+          BETTER_AUTH_SECRET: "schema-generation-only-secret-with-at-least-32-bytes",
+          DATABASE_URL: "postgresql://schema:schema@localhost:5432/schema",
+        },
+      },
     );
     const generated = normalizeGeneratedSchema(readFileSync(output, "utf8"));
     if (argv[0] === "--write") {
