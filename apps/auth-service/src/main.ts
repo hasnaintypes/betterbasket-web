@@ -1,16 +1,16 @@
 import "reflect-metadata";
 import { ValidationPipe } from "@nestjs/common";
-import { bootstrapService, loadConfig, port } from "@betterbasket/runtime";
-import { z } from "zod";
+import { bootstrapService } from "@betterbasket/runtime";
 import type { Express } from "express";
 import { AppModule } from "./app.module";
 import { createAuth } from "./auth/auth.config";
+import { getAuthConfig } from "./config";
 
 async function bootstrap() {
   await bootstrapService({
     module: AppModule,
     name: "auth-service",
-    port: () => loadConfig(z.object({ PORT: port() })).PORT,
+    port: () => getAuthConfig().PORT,
     options: {
       bodyParser: false, // Better Auth reads the raw request body itself.
       swagger: {

@@ -6,6 +6,10 @@ const migration = readFileSync(
   new URL("../drizzle/0000_demonic_pet_avengers.sql", import.meta.url),
   "utf8",
 );
+const rateLimitMigration = readFileSync(
+  new URL("../drizzle/0001_moaning_multiple_man.sql", import.meta.url),
+  "utf8",
+);
 
 test("migration creates the Better Auth and project tables", () => {
   for (const name of [
@@ -41,4 +45,10 @@ test("audit log stores a hash instead of a raw IP and timestamps carry a time zo
   assert.match(auditTable, /"ip_hash" text/);
   assert.doesNotMatch(auditTable, /"ip" text|"ip_address" text/);
   assert.match(auditTable, /"at" timestamp with time zone/);
+});
+
+test("database rate limits have a unique key and millisecond request timestamp", () => {
+  assert.match(rateLimitMigration, /CREATE TABLE "rate_limit"/);
+  assert.match(rateLimitMigration, /"last_request" bigint NOT NULL/);
+  assert.match(rateLimitMigration, /CONSTRAINT "rate_limit_key_unique" UNIQUE\("key"\)/);
 });

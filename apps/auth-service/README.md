@@ -1,4 +1,32 @@
-# Auth database and migrations
+# Auth service
+
+## Runtime security configuration
+
+The service requires `BASE_URL` (the public API origin), `TRUSTED_ORIGINS` (an
+explicit comma-separated list of frontend origins), `BETTER_AUTH_SECRET` (at
+least 32 UTF-8 bytes), and `DATABASE_URL` (the runtime PostgreSQL URL). It
+fails startup when any are missing or invalid. `DIRECT_DATABASE_URL` is used
+only by Drizzle migrations. See the environment examples for each deployment.
+
+Better Auth issues 15-minute EdDSA JWTs with `iss` and `aud` equal to
+`BASE_URL`. The token includes only the v2 claims. `orgId` and `orgRole` are
+null unless the user's active organization has a current membership row. An
+organization claim alone never grants seller access. JWKS keys rotate every
+30 days; expired keys remain published for one hour. Keep the JWKS endpoint
+private to service callers at the gateway.
+
+Session cookies are Secure, HttpOnly, SameSite=Lax, and host-only on the API
+host. Frontends must call the gateway with credentials included. Database
+rate limiting permits five email sign-in attempts per minute per limiter key;
+the sixth returns 429. Passwords require at least 12 characters.
+
+The local HTTP integration test requires a migrated disposable PostgreSQL
+database. Set `AUTH_INTEGRATION_DATABASE_URL` and run
+`pnpm --filter auth-service test:integration`. It exercises JWT verification
+against the service JWKS, membership changes, cookie attributes, rate limits,
+and key rotation.
+
+## Auth database and migrations
 
 The auth service uses the `bb_auth` database on a developer's approved Neon
 development branch. Runtime traffic uses the pooled `DATABASE_URL` and a SQL

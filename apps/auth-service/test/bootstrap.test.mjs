@@ -28,7 +28,7 @@ test("auth service health, CORS, docs, and SIGTERM", { timeout: 35_000 }, async 
       PORT: String(port),
       ENABLE_DOCS: "false",
       GIT_SHA: "test-sha",
-      AUTH_SERVICE_URL: base,
+      BASE_URL: base,
       DATABASE_URL: "postgresql://test:test@127.0.0.1:5432/test",
       BETTER_AUTH_SECRET: "test-only-secret-with-32-characters-minimum",
       TRUSTED_ORIGINS: "http://localhost:3000",
