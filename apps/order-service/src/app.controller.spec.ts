@@ -10,7 +10,9 @@ jest.setTimeout(60_000);
 const validEnv = {
   NODE_ENV: "test",
   PORT: "4004",
-  AUTH_SERVICE_URL: "http://127.0.0.1:4001",
+  AUTH_ISSUER: "http://127.0.0.1:4000",
+  AUTH_AUDIENCE: "http://127.0.0.1:4000",
+  AUTH_JWKS_URL: "http://127.0.0.1:4001/api/auth/jwks",
   DATABASE_URL: "postgresql://user:password@db.example.test/db",
   PRODUCT_SERVICE_URL: "http://127.0.0.1:4002",
   KAFKA_BROKERS: "broker.example.test:9092",
