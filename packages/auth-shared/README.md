@@ -1,3 +1,19 @@
+# User JWT verification
+
+Downstream services verify user JWTs with `JwksVerifier` or `@Auth()` using three separate settings:
+
+```text
+AUTH_ISSUER=https://api.betterbasket.app
+AUTH_AUDIENCE=https://api.betterbasket.app
+AUTH_JWKS_URL=https://auth.internal.betterbasket.app/api/auth/jwks
+```
+
+`AUTH_ISSUER` is the public API origin configured as auth-service's `BASE_URL`. `AUTH_AUDIENCE` defaults to that issuer when omitted. `AUTH_JWKS_URL` must point to the private JWKS endpoint. No localhost fallback is used. The gateway's `AUTH_SERVICE_URL` remains its upstream routing setting.
+
+The verifier accepts EdDSA only, allows five seconds of clock skew, and validates the v2 claims. Its remote JWKS client is shared per process. jose caches keys for ten minutes by default and limits refetches to one per thirty seconds; an unknown key triggers a refetch after that cooldown. A token whose key cannot be found or refreshed is rejected. A removed key may remain accepted in cache for up to ten minutes, so emergency key revocation must account for that window. Verification failures return `TOKEN_EXPIRED` for expired tokens and `UNAUTHENTICATED` otherwise, without exposing token or provider details.
+
+For direct construction, pass `new JwksVerifier({ issuer, audience, jwksUrl })`. Tests may override `cacheMaxAgeMs` and `cooldownMs` to exercise rotation without waiting for production timeouts.
+
 # Internal service authentication
 
 Services use short lived HS256 tokens only for `/internal/*` routes. The gateway blocks those routes. User routes continue to use `@Auth()` and JWKS verified user tokens.
