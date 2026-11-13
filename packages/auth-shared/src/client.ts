@@ -5,7 +5,7 @@ import { organizationClient, adminClient, jwtClient } from "better-auth/client/p
  * Shared Better Auth browser client used by all three Next.js apps
  * (web, seller-portal, admin-portal). Each app just does:
  *
- *   export const authClient = makeAuthClient(process.env.NEXT_PUBLIC_AUTH_URL!);
+ *   export const authClient = makeAuthClient(process.env.NEXT_PUBLIC_API_URL!);
  */
 export function makeAuthClient(baseURL: string) {
   return createAuthClient({
