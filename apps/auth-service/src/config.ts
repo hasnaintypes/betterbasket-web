@@ -30,6 +30,11 @@ export const authEnvSchema = z.object({
       (value) =>
         Buffer.byteLength(value, "utf8") >= 32 && !/changeme|change-me|placeholder/i.test(value),
     ),
+  AUDIT_IP_SALT: z
+    .string()
+    .refine(
+      (value) => Buffer.byteLength(value, "utf8") >= 32 && !/changeme|placeholder/i.test(value),
+    ),
   DATABASE_URL: databaseUrl,
 });
 
