@@ -5,6 +5,8 @@ import type { AuthTokenClaims, OrgRole } from "@betterbasket/contracts";
 import { getAuthConfig } from "../config";
 import { pool } from "../db/pool";
 import * as schema from "../db/schema";
+import { createEmailDelivery } from "../email/delivery";
+import { ConsoleEmailSender, ResendEmailSender, type EmailSender } from "../email/sender";
 
 const db = drizzle(pool, { schema });
 
@@ -30,8 +32,19 @@ function memberRole(value: string): OrgRole | null {
   }
 }
 
-export async function createAuth() {
+export async function createAuth(emailSender?: EmailSender) {
   const config = getAuthConfig();
+  const sender =
+    emailSender ??
+    (config.RESEND_API_KEY
+      ? new ResendEmailSender(config.RESEND_API_KEY, config.EMAIL_FROM)
+      : new ConsoleEmailSender());
+  const email = createEmailDelivery(sender, {
+    apiUrl: config.BASE_URL,
+    webUrl: config.WEB_URL,
+    nodeEnv: config.NODE_ENV,
+    allowedRecipients: config.EMAIL_ALLOWED_RECIPIENTS,
+  });
   const { betterAuth } = await import("better-auth");
   const { drizzleAdapter } = await import("better-auth/adapters/drizzle");
   const { organization, admin, jwt } = await import("better-auth/plugins");
@@ -48,11 +61,27 @@ export async function createAuth() {
     emailAndPassword: {
       enabled: true,
       minPasswordLength: 12,
+      requireEmailVerification: true,
+      resetPasswordTokenExpiresIn: 60 * 60,
+      sendResetPassword: async ({ user, token, url }) => {
+        email.enqueue("password-reset", user.email, token, url);
+      },
+    },
+    emailVerification: {
+      sendOnSignUp: true,
+      expiresIn: 60 * 60,
+      sendVerificationEmail: async ({ user, token, url }) => {
+        email.enqueue("verification", user.email, token, url);
+      },
     },
     rateLimit: {
       enabled: true,
       storage: "database",
-      customRules: { "/sign-in/email": { window: 60, max: 5 } },
+      customRules: {
+        "/sign-in/email": { window: 60, max: 5 },
+        "/send-verification-email": { window: 60, max: 3 },
+        "/request-password-reset": { window: 60, max: 3 },
+      },
     },
     plugins: [
       organization({

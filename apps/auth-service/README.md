@@ -26,6 +26,27 @@ database. Set `AUTH_INTEGRATION_DATABASE_URL` and run
 against the service JWKS, membership changes, cookie attributes, rate limits,
 and key rotation.
 
+## Verification and password reset email
+
+New accounts must verify their email before password sign-in. Verification and
+password reset links expire after one hour. Better Auth sends through a small
+`EmailSender` interface: local development uses a console sender that logs
+only that delivery was suppressed; setting `RESEND_API_KEY` selects Resend.
+Resend delivery requires a verified sender in `EMAIL_FROM`.
+
+Set `WEB_URL` to one of `TRUSTED_ORIGINS`. Email callbacks are built from that
+configured frontend URL; request headers and callback URLs supplied by callers
+do not choose the destination. In non-production, `EMAIL_ALLOWED_RECIPIENTS`
+must list each address permitted to receive mail. Other recipients are silently
+suppressed. Production requires `RESEND_API_KEY`. Both verification resend and
+password reset requests are limited to three per minute per Better Auth rate
+limit key. Resend 429 responses receive at most two bounded background retries;
+mail delivery never blocks sign-up or reset requests.
+
+Do not put API keys in tracked env examples. Add `RESEND_API_KEY`,
+`EMAIL_FROM`, `EMAIL_ALLOWED_RECIPIENTS`, and `WEB_URL` to the deployment's
+secret/environment settings. CI remains separately managed.
+
 ## Auth database and migrations
 
 The auth service uses the `bb_auth` database on a developer's approved Neon
