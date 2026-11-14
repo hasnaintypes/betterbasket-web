@@ -4,7 +4,8 @@
 
 The service requires `BASE_URL` (the public API origin), `TRUSTED_ORIGINS` (an
 explicit comma-separated list of frontend origins), `BETTER_AUTH_SECRET` (at
-least 32 UTF-8 bytes), and `DATABASE_URL` (the runtime PostgreSQL URL). It
+least 32 UTF-8 bytes), `AUDIT_IP_SALT` (an independent 32-byte secret), and
+`DATABASE_URL` (the runtime PostgreSQL URL). It
 fails startup when any are missing or invalid. `DIRECT_DATABASE_URL` is used
 only by Drizzle migrations. See the environment examples for each deployment.
 
@@ -42,8 +43,9 @@ describes the guarded branch setup.
   `(organization_id, user_id)` membership index.
 - `src/db/schema.app.ts` holds `audit_log`, `outbox`, and `processed_events`.
   These tables use UUID event/row IDs and UTC timestamps. `audit_log` stores
-  `ip_hash` rather than a raw IP address; callers must compute a salted hash
-  and keep secrets out of `details`.
+  `ip_hash` rather than a raw IP address. The audit writer HMACs IPs with
+  `AUDIT_IP_SALT`, stores only controlled detail flags, and never copies
+  passwords, tokens, full emails, ban reasons, or user agents into details.
 - `src/db/schema.ts` re-exports both files. Better Auth's generated identity
   IDs remain text columns; the application-owned row and event IDs use UUID.
 
@@ -75,6 +77,8 @@ connection, replacing the role name if needed:
 ```sql
 GRANT USAGE ON SCHEMA public TO bb_auth_app;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO bb_auth_app;
+REVOKE ALL ON TABLE audit_log FROM bb_auth_app;
+GRANT SELECT, INSERT ON TABLE audit_log TO bb_auth_app;
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO bb_auth_app;
 ALTER DEFAULT PRIVILEGES FOR ROLE neondb_owner IN SCHEMA public
   GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO bb_auth_app;
@@ -83,6 +87,37 @@ ALTER DEFAULT PRIVILEGES FOR ROLE neondb_owner IN SCHEMA public
 Do not grant schema `CREATE`, database `CREATE`, `CREATEROLE`, or
 `neon_superuser` membership to the runtime role. The migrator URL must not be
 used by the running auth service.
+
+The audit permission migration also revokes public table access and limits
+`bb_auth_app` to `SELECT` and `INSERT` on `audit_log`. If a deployment uses a
+different runtime role name, apply the equivalent role-specific grants before
+starting auth-service. Verify that `has_table_privilege` is false for `UPDATE`
+and `DELETE` on this table. Audit timestamps come from PostgreSQL `now()`.
+
+## Audit events and admin bootstrap
+
+Auth hooks append sign-in success/failure, sign-out, password change/reset,
+email verification, ban/unban, platform role changes, organization membership
+changes, and JWKS key creation/rotation to `audit_log`. A failed audit insert
+does not reject an auth request; it emits a structured `audit write failed`
+error with an `auditWriteFailuresTotal` counter. The writer never stores raw
+IP addresses. It does not store user agents, so even oversized or malicious
+ones cannot enter the audit table.
+
+To grant the first admin role, create a normal account and verify its email
+through the configured auth flow. Put that account's address in
+`ADMIN_BOOTSTRAP_EMAIL` in a local ignored environment setting, then run:
+
+```bash
+pnpm --filter auth-service auth:create-admin
+```
+
+The command uses the runtime database connection, locks concurrent bootstrap
+runs, requires a verified account, and writes an audit row in the same
+transaction. It never exposes an admin creation endpoint over HTTP. It
+refuses when any admin already exists; to promote a second verified account
+after an explicit operator decision, pass `--allow-additional`. The command
+does not print the account address or database connection details.
 
 ## Neon migration smoke
 

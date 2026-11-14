@@ -49,6 +49,7 @@ export function main(argv = process.argv.slice(2)) {
           BASE_URL: "http://localhost:4000",
           TRUSTED_ORIGINS: "http://localhost:3000",
           BETTER_AUTH_SECRET: "schema-generation-only-secret-with-at-least-32-bytes",
+          AUDIT_IP_SALT: "schema-generation-only-audit-salt-with-32-bytes",
           DATABASE_URL: "postgresql://schema:schema@localhost:5432/schema",
         },
       },

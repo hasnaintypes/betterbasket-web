@@ -31,6 +31,7 @@ test("auth service health, CORS, docs, and SIGTERM", { timeout: 35_000 }, async 
       BASE_URL: base,
       DATABASE_URL: "postgresql://test:test@127.0.0.1:5432/test",
       BETTER_AUTH_SECRET: "test-only-secret-with-32-characters-minimum",
+      AUDIT_IP_SALT: "test-only-audit-salt-with-32-characters-minimum",
       TRUSTED_ORIGINS: "http://localhost:3000",
     },
     stdio: ["ignore", "pipe", "pipe"],
