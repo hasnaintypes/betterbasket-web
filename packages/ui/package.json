@@ -9,14 +9,19 @@
     ".": "./src/index.ts",
     "./styles.css": "./src/styles/globals.css",
     "./lib/*": "./src/lib/*.ts",
+    "./security/*": "./src/security/*.ts",
+    "./providers/*": "./src/providers/*.tsx",
     "./components/*": "./src/components/*.tsx",
     "./hooks/*": "./src/hooks/*.ts"
   },
   "scripts": {
     "lint": "eslint . --max-warnings=0",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "test": "node --import tsx --test test/*.test.tsx"
   },
   "dependencies": {
+    "@betterbasket/api-client": "workspace:*",
+    "@tanstack/react-query": "^5.59.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "lucide-react": "^0.451.0",
@@ -34,6 +39,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "tailwindcss": "^4.0.0",
+    "tsx": "^4.23.13",
     "typescript": "^5.6.3",
     "eslint": "^10.10.0"
   }
