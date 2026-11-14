@@ -24,6 +24,7 @@ export interface RequestOptions<T> {
   timeoutMs?: number;
   auth?: boolean;
   idempotencyKey?: string;
+  credentials?: RequestCredentials;
 }
 
 export interface ApiClientOptions {
@@ -200,7 +201,7 @@ export function createApiClient(options: ApiClientOptions) {
           method,
           headers,
           body: body === undefined ? undefined : JSON.stringify(body),
-          credentials: "omit",
+          credentials: requestOptions.credentials ?? "omit",
           signal,
         });
       } catch (error) {
