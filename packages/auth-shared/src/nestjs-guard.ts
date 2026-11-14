@@ -9,7 +9,7 @@ import {
   applyDecorators,
 } from "@nestjs/common";
 import type { PlatformRole } from "@betterbasket/contracts";
-import { JwksVerifier, createJwksVerifierFromEnv } from "./jwks-verifier.js";
+import { JwksVerifier, JwtVerificationError, createJwksVerifierFromEnv } from "./jwks-verifier.js";
 
 const ROLES_KEY = "betterbasket:roles";
 
@@ -40,8 +40,10 @@ export class JwtAuthGuard implements CanActivate {
     try {
       request.user = await this.verifier.verify(header.slice("Bearer ".length));
       return true;
-    } catch {
-      throw new UnauthorizedException("Invalid or expired token");
+    } catch (error) {
+      throw new UnauthorizedException({
+        code: error instanceof JwtVerificationError ? error.code : "UNAUTHENTICATED",
+      });
     }
   }
 }
