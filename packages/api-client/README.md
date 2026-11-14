@@ -6,7 +6,8 @@
 seconds remain. Concurrent refreshes share one request. A 401 triggers one
 refresh and retry. Call `api.clearToken()` after signing out to discard its
 cached token. Session cookies are sent only to the token endpoint; data
-requests use bearer authorization.
+requests use bearer authorization. Set `credentials: "include"` explicitly for
+session endpoints such as `/api/auth/get-session`.
 
 ```ts
 import { createApiClient, idempotencyKey } from "@betterbasket/api-client";

@@ -150,6 +150,8 @@ test("JSON mutations, idempotency keys, response schema, and 204 are supported",
   assert.equal(calls[0].headers.get("Content-Type"), "application/json");
   assert.equal(calls[0].body, '{"item":1}');
   assert.equal(await client.delete("/orders/1", { auth: false }), undefined);
+  await client.get("/api/auth/get-session", { auth: false, credentials: "include" });
+  assert.equal(calls[2].credentials, "include");
 });
 
 test("timeout and invalid paths fail without exposing upstream text", async () => {
