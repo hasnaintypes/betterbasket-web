@@ -1251,6 +1251,37 @@ importers:
         specifier: ^5.6.3
         version: 5.9.3
 
+  packages/outbox:
+    dependencies:
+      '@betterbasket/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      '@nestjs/common':
+        specifier: ^11.2.3
+        version: 11.2.3(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      drizzle-orm:
+        specifier: ^0.45.2
+        version: 0.45.2(@types/pg@8.23.1)(kysely@0.29.5)(pg@8.23.0)
+      pg:
+        specifier: ^8.13.0
+        version: 8.23.0
+    devDependencies:
+      '@betterbasket/config':
+        specifier: workspace:*
+        version: link:../config
+      '@types/node':
+        specifier: ^22.7.4
+        version: 22.20.1
+      '@types/pg':
+        specifier: ^8.11.10
+        version: 8.23.1
+      eslint:
+        specifier: ^10.10.0
+        version: 10.10.0(jiti@2.7.0)
+      typescript:
+        specifier: ^5.6.3
+        version: 5.9.3
+
   packages/runtime:
     dependencies:
       '@betterbasket/logger':
