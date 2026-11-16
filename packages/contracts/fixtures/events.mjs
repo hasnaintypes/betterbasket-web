@@ -63,8 +63,8 @@ export const payloads = {
   "order.status-changed.v1": { orderId: "order-1", previousStatus: "pending", newStatus: "paid" },
   "order.status-changed.v2": {
     orderId: "order-1",
-    previousStatus: "pending",
-    newStatus: "partially_refunded",
+    previousStatus: "awaiting_payment",
+    newStatus: "paid",
   },
   "order.cancelled.v1": { orderId: "order-1", reason: "buyer_request", restock: true },
   "refund.requested.v1": {

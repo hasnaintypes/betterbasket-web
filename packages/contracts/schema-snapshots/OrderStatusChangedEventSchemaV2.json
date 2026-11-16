@@ -36,36 +36,58 @@
     "payload": {
       "properties": {
         "newStatus": {
-          "enum": [
-            "awaiting_payment",
-            "cancelled",
-            "delivered",
-            "fulfilling",
-            "paid",
-            "partially_refunded",
-            "pending",
-            "refunded",
-            "shipped"
-          ],
-          "type": "string"
+          "anyOf": [
+            {
+              "enum": [
+                "awaiting_payment",
+                "cancelled",
+                "fulfilled",
+                "in_fulfilment",
+                "paid"
+              ],
+              "type": "string"
+            },
+            {
+              "enum": [
+                "awaiting_payment",
+                "cancelled",
+                "confirmed",
+                "delivered",
+                "paid",
+                "shipped"
+              ],
+              "type": "string"
+            }
+          ]
         },
         "orderId": {
           "minLength": 1,
           "type": "string"
         },
         "previousStatus": {
-          "enum": [
-            "awaiting_payment",
-            "cancelled",
-            "delivered",
-            "fulfilling",
-            "paid",
-            "partially_refunded",
-            "pending",
-            "refunded",
-            "shipped"
-          ],
-          "type": "string"
+          "anyOf": [
+            {
+              "enum": [
+                "awaiting_payment",
+                "cancelled",
+                "fulfilled",
+                "in_fulfilment",
+                "paid"
+              ],
+              "type": "string"
+            },
+            {
+              "enum": [
+                "awaiting_payment",
+                "cancelled",
+                "confirmed",
+                "delivered",
+                "paid",
+                "shipped"
+              ],
+              "type": "string"
+            }
+          ]
         },
         "sellerId": {
           "minLength": 1,

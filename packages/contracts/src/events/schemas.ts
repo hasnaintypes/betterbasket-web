@@ -1,7 +1,11 @@
 import { z } from "zod";
 import { MoneySchema } from "../entities/common.js";
 import { OrgRoleSchema } from "../entities/common.js";
-import { OrderStatusSchema } from "../entities/order.js";
+import {
+  LegacyOrderStatusSchema,
+  OrderStatusSchema,
+  SubOrderStatusSchema,
+} from "../entities/order.js";
 import { Topics } from "./topics.js";
 
 /** Every event on the bus shares this envelope so consumers can log/trace/dedupe generically. */
@@ -41,8 +45,8 @@ export const OrderCreatedEventSchema = EventEnvelopeSchema(
 export const OrderStatusChangedEventSchema = EventEnvelopeSchema(
   z.object({
     orderId: z.string(),
-    previousStatus: OrderStatusSchema,
-    newStatus: OrderStatusSchema,
+    previousStatus: LegacyOrderStatusSchema,
+    newStatus: LegacyOrderStatusSchema,
   }),
 );
 
@@ -102,17 +106,7 @@ const sellerStatus = z.enum([
   "suspended",
   "closed",
 ]);
-const orderStatusV2 = z.enum([
-  "pending",
-  "awaiting_payment",
-  "paid",
-  "fulfilling",
-  "shipped",
-  "delivered",
-  "cancelled",
-  "partially_refunded",
-  "refunded",
-]);
+const orderStatusV2 = z.union([OrderStatusSchema, SubOrderStatusSchema]);
 const subOrder = z.object({
   id,
   sellerId: id,
@@ -219,7 +213,11 @@ export const OrderCreatedEventSchemaV2 = event(
 /** @deprecated The v1 status vocabulary is retained for existing consumers. */
 export const OrderStatusChangedEventSchemaV1EnvelopeV2 = event(
   Topics.OrderStatusChanged,
-  z.object({ orderId: id, previousStatus: OrderStatusSchema, newStatus: OrderStatusSchema }),
+  z.object({
+    orderId: id,
+    previousStatus: LegacyOrderStatusSchema,
+    newStatus: LegacyOrderStatusSchema,
+  }),
 );
 export const OrderStatusChangedEventSchemaV2 = event(
   Topics.OrderStatusChangedV2,
