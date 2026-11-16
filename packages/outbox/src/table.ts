@@ -1,5 +1,28 @@
 import { sql } from "drizzle-orm";
-import { index, integer, jsonb, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import {
+  index,
+  integer,
+  jsonb,
+  pgTable,
+  primaryKey,
+  text,
+  timestamp,
+  uuid,
+} from "drizzle-orm/pg-core";
+
+/** Add through each consuming service's own migration before using Inbox. */
+export const processedEventsTable = pgTable(
+  "processed_events",
+  {
+    consumer: text("consumer").notNull(),
+    eventId: uuid("event_id").notNull(),
+    processedAt: timestamp("processed_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.consumer, table.eventId] }),
+    index("processed_events_processed_at_idx").on(table.processedAt),
+  ],
+);
 
 /** Each adopting service adds this table with its own migration. */
 export const outboxTable = pgTable(

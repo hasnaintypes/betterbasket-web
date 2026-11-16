@@ -29,3 +29,22 @@ The integration test uses a dedicated, disposable Postgres database from
 `OUTBOX_TEST_DATABASE_URL` and never logs the connection string. It creates
 and drops its own table. Point it at a Neon test project; do not use a runtime
 application role that lacks schema privileges.
+
+## Consumer inbox
+
+Add `processedEventsTable` through each consuming service's own migration before
+using `new Inbox(db)`. The auth-service already has a compatible table. Use a
+consumer name in `<env>.<service>.<purpose>` form and the event envelope's UUID
+as `eventId`. `Inbox.run({ consumer, eventId }, async (tx) => { ... })` opens a
+transaction, claims the event, and passes that same transaction to the handler.
+Write every business effect through `tx`. A duplicate returns
+`{ processed: false }` without calling the handler; a successful first delivery
+returns `{ processed: true, value }`. If the handler throws, the claim and its
+effects roll back so the event can be retried. Do not acknowledge a message
+until `run` resolves.
+
+Register `InboxRetention` in a Nest module to delete processed rows at startup
+and hourly, or call `purgeProcessedEvents(db)` from a service-owned scheduler.
+Retention is 14 days. Keep the broker replay window at or below 14 days, or a
+replayed event can be processed again after its inbox row is removed. The shared
+package does not run migrations or register jobs in consuming services.
