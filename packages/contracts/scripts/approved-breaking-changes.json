@@ -1,6 +1,6 @@
 {
-  "issue": 19,
-  "reason": "Internal v2 token claims and platform role migration; all consumers are in this monorepo.",
+  "issues": [19, 83],
+  "reason": "Issue #19 migrates internal token claims. Issue #83 requires a shipping address, bounded request lines, and the finalized order status vocabulary; the old v1 event status schema remains available for existing consumers.",
   "snapshots": {
     "AuthTokenClaimsSchema.json": {
       "before": "30c6097ff0c1b749ba84e5f219729585c769bee1375dcb6f1d407b4105f1c12e",
@@ -13,6 +13,18 @@
     "UserSchema.json": {
       "before": "2aff5e7cca66014c17f4c348ab7c029be932ade3bf5b25af71d1c7c8cd9291cd",
       "after": "c2847d00b942f41e1ed1dc2bcd7ccac9ce52f4c2659c594cd3844e7318145db5"
+    },
+    "CreateOrderInputSchema.json": {
+      "before": "8dc2f84aa38ebfb5cf7d09666cbe40d2c254405b1c70b7a9e87b497a0575e8c3",
+      "after": "5ffa7f49101250d201252f6446c63b6f937b2b1f88000fc1474c59194a8c20d0"
+    },
+    "OrderStatusSchema.json": {
+      "before": "aee7dc3003ef6a9f820ae6813b27c5e78ef3fff97c0d91b677d1b12eb3eba6f6",
+      "after": "66e9f0415c9010c73fab1d002155a6720faf06e0c00e5e73c8a1d0c13129aade"
+    },
+    "OrderStatusChangedEventSchemaV2.json": {
+      "before": "0c2b8016928e2c0c16bcab8afc2db92d97c89243ad2c71686aaabe8ea1d333db",
+      "after": "9dff13c38e15fbbd6d4054867ba2b70b170c1fd27cf1678a17ed14786317ae83"
     }
   }
 }

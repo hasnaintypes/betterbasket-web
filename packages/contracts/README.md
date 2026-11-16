@@ -45,3 +45,29 @@ vocabulary changed.
 
 The sample payloads in `fixtures/events.mjs` are checked against every topic
 and each schema's required envelope and payload fields in `scripts/events.test.mjs`.
+
+## Checkout contracts
+
+`CreateOrderInputSchema` requires 1–50 product lines and a length-capped
+`shippingAddress` with an uppercase two-letter country code. Each quantity is
+1–99. `expectedTotal` is optional and is the only price the client may send;
+unknown fields, including `unitPrice` and `total`, are rejected. The order
+service must resolve prices from the reservation response and compare the
+calculated total with `expectedTotal` when present.
+
+`ReservationRequestSchema` sends an order ID and 1–50 line IDs, product IDs,
+variant IDs, and quantities to product-service. `ReservationResponseSchema`
+returns authoritative unit prices, seller IDs, title snapshots, SKUs, and a
+reservation expiry. `OrderViewSchema`, `SubOrderViewSchema`, and
+`PayableOrderViewSchema` describe read and internal payment views. They use
+`OrderStatusSchema` (`awaiting_payment`, `paid`, `in_fulfilment`, `fulfilled`,
+`cancelled`), `SubOrderStatusSchema`, and a separate `RefundStatusSchema`.
+`OrderErrorCodes` names the expected checkout and transition failures.
+
+Issue #83 intentionally tightens `CreateOrderInputSchema` and replaces the old
+order status vocabulary. The compatibility checker allows only the exact
+before/after snapshot hashes recorded in `approved-breaking-changes.json`.
+The existing v1 event schema still uses `LegacyOrderStatusSchema`; the v2
+`order.status-changed` event uses the finalized status vocabulary. Adopting
+services must update their handlers and stored status migration before using
+the new contracts. No service implementation or migration is included here.
