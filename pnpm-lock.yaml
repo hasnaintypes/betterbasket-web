@@ -964,6 +964,9 @@ importers:
       '@betterbasket/logger':
         specifier: workspace:*
         version: link:../../packages/logger
+      '@betterbasket/outbox':
+        specifier: workspace:*
+        version: link:../../packages/outbox
       '@betterbasket/runtime':
         specifier: workspace:*
         version: link:../../packages/runtime
