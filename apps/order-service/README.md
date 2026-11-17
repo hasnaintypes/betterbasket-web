@@ -32,6 +32,11 @@ status changes, the same transaction updates the order version and writes
 optional reason. Callers must authorize the actor before invoking the service.
 Invalid transitions return 409 `INVALID_TRANSITION`.
 
+The order-service migration also creates `idempotency_keys` for future
+idempotent order creation. The shared runtime store and interceptor manage
+claims, replay, and expiry; this service does not yet decorate any route with
+`@Idempotent()`.
+
 Apply migrations with a separate migrator role and the direct Postgres URL
 before deploying code that uses these tables. The runtime uses the pooled
 `DATABASE_URL` with no DDL rights. There is no production data to migrate from

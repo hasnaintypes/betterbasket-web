@@ -38,6 +38,7 @@ test("an empty database migrates once and a second migration is a no-op", async 
   assert.deepEqual(
     result.rows.map((row) => row.table_name).filter((name) => name !== "__drizzle_migrations"),
     [
+      "idempotency_keys",
       "order_items",
       "order_status_history",
       "orders",

@@ -15,6 +15,13 @@
       "when": 1794890722186,
       "tag": "0001_little_young_avengers",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794892550634,
+      "tag": "0002_secret_prowler",
+      "breakpoints": true
     }
   ]
 }

@@ -31,3 +31,47 @@ Use `new ZodValidationPipe(schema)` on request bodies and parameters. It returns
 The helper serves `GET /health` with `status`, `service`, `timestamp`, and `version` from `GIT_SHA` (or `unknown`). `GET /ready` is 200 with no checks registered. Register checks with `getReadinessRegistry(app).register(name, check)`; a failed or thrown check returns 503. Readiness also returns 503 during shutdown. SIGTERM starts graceful shutdown so in-flight requests can finish.
 
 Swagger is served when `NODE_ENV` is not `production`, or when `ENABLE_DOCS=true`. In production it is otherwise absent. Apps that need browser access must explicitly enable CORS with their own validated origin list.
+
+## Idempotent mutations
+
+Postgres services can include `idempotencyKeysTable` in their Drizzle schema and
+apply a service-owned migration before enabling idempotent routes. Register
+`IDEMPOTENCY_POOL` with a dedicated Postgres pool, then register
+`IdempotencyStore`, `IdempotencyCleanup`, and `IdempotencyInterceptor` as
+providers. Register the interceptor globally with `APP_INTERCEPTOR`; it only
+acts on methods marked `@Idempotent()`.
+
+```ts
+@Module({
+  providers: [
+    { provide: IDEMPOTENCY_POOL, useValue: idempotencyPool },
+    IdempotencyStore,
+    IdempotencyCleanup,
+    { provide: APP_INTERCEPTOR, useClass: IdempotencyInterceptor },
+  ],
+})
+export class AppModule {}
+
+@Post("orders")
+@Idempotent()
+createOrder() { /* handler */ }
+```
+
+Apply the authentication guard before the interceptor: the scope uses the
+authenticated `user.sub`, HTTP method, and concrete route path. The header must be
+a UUID `Idempotency-Key`; absent or malformed keys return 400. The body is
+hashed as canonical JSON, so object key order has no effect. The first call
+stores its status and body for 24 hours. Repeating the same key and body
+replays the stored response and original request ID; a different body returns
+422 `IDEMPOTENCY_KEY_REUSED`. A concurrent call returns 409
+`REQUEST_IN_PROGRESS`. A 4xx handler result is stored; a 5xx or thrown server
+error is not. A pending claim can be retried after a 30-second lease if the
+first process crashes. A row lock prevents a second handler from running while
+the first still owns the claim. The cleanup provider removes expired rows
+hourly; the store also reclaims an expired key on its next use.
+
+Use a separate pool for idempotency because the row lock holds one connection
+while the handler runs. Any external side effect in the handler must use a
+deterministic provider idempotency key derived from an internal ID. Add the
+interceptor to mutation endpoints only when those endpoint issues are
+implemented.
