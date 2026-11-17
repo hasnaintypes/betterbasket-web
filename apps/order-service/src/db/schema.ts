@@ -160,5 +160,26 @@ export const orderStatusHistory = pgTable(
   ],
 );
 
+export const subOrderStatusHistory = pgTable(
+  "sub_order_status_history",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    subOrderId: uuid("sub_order_id")
+      .notNull()
+      .references(() => subOrders.id),
+    fromStatus: subOrderStatusEnum("from_status").notNull(),
+    toStatus: subOrderStatusEnum("to_status").notNull(),
+    actorId: text("actor_id").notNull(),
+    reason: text("reason"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("sub_order_status_history_sub_order_created_idx").on(
+      table.subOrderId,
+      table.createdAt.desc(),
+    ),
+  ],
+);
+
 export const outbox = outboxTable;
 export const processedEvents = processedEventsTable;
