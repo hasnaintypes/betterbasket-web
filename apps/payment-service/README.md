@@ -1,4 +1,4 @@
-# Payment-service webhook foundation
+# Payment-service data and webhook foundation
 
 The gateway forwards only `POST /webhooks/stripe/account` and
 `POST /webhooks/stripe/connect` to this service's
@@ -13,12 +13,36 @@ Configure `STRIPE_ACCOUNT_WEBHOOK_SECRET` and
 while false. Keep all testing and development on Stripe test keys. No Stripe
 network calls are needed for the signed-fixture tests.
 
-The service-owned `drizzle/` migration creates only `stripe_events`, `outbox`,
-and `processed_events`. Apply it with a separate migrator role and the direct
-Postgres URL before routing webhooks to the service. The runtime uses the
-pooled `DATABASE_URL` role without DDL rights. This migration does not add the
-existing prototype `payments` or `payout_ledger` tables; the full payment
-schema belongs to issue #95.
+The first service-owned migration creates `stripe_events`, `outbox`, and
+`processed_events`. The next migration replaces any prototype `payments` and
+`payout_ledger` tables with one platform payment per order, immutable
+`ledger_entries`, one transfer per seller sub-order, refunds, disputes,
+reconciliation exceptions, and the shared `idempotency_keys` table. No payment
+data exists in the prototype tables to preserve. The new migration is additive
+to the webhook tables. It must be applied before code that uses the new model.
+
+Amounts are integer minor units. Payment, ledger, transfer, refund, and dispute
+amounts must be positive; currency is an uppercase three-letter code (the
+current product uses USD). PaymentIntent and order IDs are unique per payment;
+sub-order IDs are unique per transfer. Ledger rows move an amount between
+distinct debit and credit accounts, carry a provider object reference and a
+unique deterministic idempotency key, and are never edited. Corrections use
+new compensating entries. Balances are derived from ledger entries. Posting,
+allocation, and refund-limit rules are implemented in later issues.
+
+Apply `sql/bootstrap_roles.sql` as the database owner before migrations,
+provision login credentials through the secret manager, then run migrations
+as `payment_migrator` over the direct Postgres URL. Run
+`sql/grant_runtime.sql` as the database owner after each migration. The pooled
+runtime `DATABASE_URL` must use `payment_app`; it has DML rights on service
+tables but only `SELECT` and `INSERT` on `ledger_entries` and no schema DDL.
+Do not use the owner or migrator role for the application connection. The
+bootstrap script creates roles without passwords or login rights, so the
+database administrator must enable their login when provisioning credentials.
+
+The old client-priced destination-charge `POST /payments/intents` prototype
+returns 501. Issue #98 will implement the order-derived platform PaymentIntent
+flow; this schema change does not create Stripe objects or post ledger entries.
 
 `stripe_events` deduplicates by Stripe event ID. Unknown event types are stored
 and marked processed. Processors register by scope and type and must write
@@ -30,6 +54,7 @@ by a crash; it serializes processing with `FOR UPDATE`. Processed rows are
 purged after 90 days by a daily retention job. Failed rows remain for recovery.
 
 Run `pnpm --filter payment-service db:check` to validate migration metadata.
-The integration suite uses `PAYMENT_TEST_DATABASE_URL` and creates a disposable
-schema; keep the URL in a secure ignored setting and use a development test
-database. Run it with `pnpm --filter payment-service test:integration`.
+The integration suite uses `PAYMENT_TEST_DATABASE_URL` and creates disposable
+schemas and roles; the development test role needs `CREATEROLE`. Keep the URL
+in a secure ignored setting and use a development test database. Run it with
+`pnpm --filter payment-service test:integration`.
