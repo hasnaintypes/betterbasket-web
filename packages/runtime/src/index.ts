@@ -65,3 +65,14 @@ export {
 } from "./http/request-id.middleware";
 export { ZodValidationPipe } from "./http/zod-validation.pipe";
 export { bootstrapService, getReadinessRegistry } from "./bootstrap/bootstrap-service";
+export { idempotencyKeysTable } from "./idempotency/table";
+export {
+  IDEMPOTENCY_POOL,
+  IdempotencyStore,
+  IdempotencyCleanup,
+  IdempotencyKeyReusedError,
+  RequestInProgressError,
+  type IdempotentResponse,
+  type IdempotencyResult,
+} from "./idempotency/store";
+export { Idempotent, IdempotencyInterceptor, requestBodyHash } from "./idempotency/interceptor";
