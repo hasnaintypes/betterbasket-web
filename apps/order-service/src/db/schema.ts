@@ -1,4 +1,5 @@
 import { outboxTable, processedEventsTable } from "@betterbasket/outbox";
+import { idempotencyKeysTable } from "@betterbasket/runtime";
 import { sql } from "drizzle-orm";
 import {
   char,
@@ -183,3 +184,4 @@ export const subOrderStatusHistory = pgTable(
 
 export const outbox = outboxTable;
 export const processedEvents = processedEventsTable;
+export const idempotencyKeys = idempotencyKeysTable;
