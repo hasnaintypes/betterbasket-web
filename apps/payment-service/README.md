@@ -27,8 +27,39 @@ current product uses USD). PaymentIntent and order IDs are unique per payment;
 sub-order IDs are unique per transfer. Ledger rows move an amount between
 distinct debit and credit accounts, carry a provider object reference and a
 unique deterministic idempotency key, and are never edited. Corrections use
-new compensating entries. Balances are derived from ledger entries. Posting,
-allocation, and refund-limit rules are implemented in later issues.
+new compensating entries. Balances are derived from ledger entries.
+
+The pure builders in `src/ledger/` produce insertable ledger rows without
+database or Stripe I/O. The caller must load the authoritative charge,
+already-refunded amount, seller payable, and transfer totals, then insert all
+rows and update those totals in one serialized database transaction. The
+builders reject zero amounts, invalid currency, inconsistent allocations,
+refunds above the charge, and transfers above seller payable. Their arguments
+are policy inputs, not proof of persisted balance; the future repository layer
+must enforce those caps under a lock. Provider object IDs give deterministic
+keys of `<entryType>:<stripeId>:<index>`; replaying the same operation produces
+identical keys. Allocation rows are sorted by sub-order ID. Every seller row
+carries both seller and sub-order IDs. Zero-value allocation sides are omitted.
+
+`calculateAllocations` takes each seller's items subtotal and shipping in
+minor units. Commission is half-up rounded from items subtotal and basis
+points, never from shipping. Seller net is gross minus commission. The
+provisional rate is 1000 basis points, but callers pass the order's captured
+rate. Refund policy supplies the commission reversal explicitly: seller-caused
+refunds can reverse it, while buyer-remorse refunds may retain it. A refund
+creates a refund-pending transfer plus seller-payable and optional commission
+reversal rows; `postRefundClearing` moves the actual Stripe refund out of
+pending. Stripe processing fees remain an expense after refunds. If a transfer
+reversal cannot cover a negative seller payable, `postPlatformReceivable`
+records the shortfall as a seller receivable. Disputes and adjustments create
+new rows; they never mutate previous entries.
+
+Golden example: a $100 charge with seller A's $60 and seller B's $40 items at
+10% commission allocates $54 and $36 to seller payable, and $6 and $4 to
+platform commission. A $3.20 Stripe fee is separate. A's $54 transfer followed
+by a full seller-caused $60 refund has a $54 transfer reversal and $6
+commission reversal. The unit suite checks those exact rows and balances,
+then uses `fast-check` for 10,000 generated orders.
 
 Apply `sql/bootstrap_roles.sql` as the database owner before migrations,
 provision login credentials through the secret manager, then run migrations
