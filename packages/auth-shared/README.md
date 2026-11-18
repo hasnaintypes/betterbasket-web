@@ -1,3 +1,9 @@
+# User JWT verification
+
+Downstream services set `AUTH_ISSUER` to the public API origin used by auth-service, `AUTH_AUDIENCE` to the configured JWT audience (defaults to the issuer when omitted), and `AUTH_JWKS_URL` to the private auth-service JWKS endpoint. All three values are independent of the gateway's `AUTH_SERVICE_URL` routing target. The issuer and JWKS URL are required; there is no localhost fallback.
+
+`JwksVerifier` accepts `{ issuer, audience, jwksUrl, cacheMaxAgeMs?, cooldownMs? }`. It accepts only EdDSA user tokens, allows five seconds of clock skew, validates v2 claims, and caches JWKS responses for up to ten minutes by default. A token with an unknown `kid` triggers a refetch subject to JOSE's default 30-second cooldown. A removed key can remain accepted until the cache expires; rotate with an overlap of at least the token lifetime plus the cache window. The process-wide environment factory reuses one verifier and JWKS cache. Failed verification denies access; an expired token yields `TOKEN_EXPIRED`, while other failures yield `UNAUTHENTICATED`. Do not log tokens.
+
 # Internal service authentication
 
 Services use short lived HS256 tokens only for `/internal/*` routes. The gateway blocks those routes. User routes continue to use `@Auth()` and JWKS verified user tokens.
