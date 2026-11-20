@@ -29,8 +29,7 @@ test(
       databaseUrl,
       "Set AUTH_INTEGRATION_DATABASE_URL to a migrated disposable PostgreSQL database",
     );
-    const db = new pg.Client({ connectionString: databaseUrl });
-    await db.connect();
+    const db = new pg.Pool({ connectionString: databaseUrl, keepAlive: true, max: 2 });
     // A disposable database can be reused across local runs. Keys from an older
     // test secret cannot be decrypted by this run's new secret.
     await db.query('DELETE FROM "jwks"');
@@ -47,6 +46,9 @@ test(
         GIT_SHA: "integration",
         BASE_URL: base,
         TRUSTED_ORIGINS: base,
+        WEB_URL: base,
+        EMAIL_FROM: "BetterBasket <no-reply@example.test>",
+        EMAIL_ALLOWED_RECIPIENTS: "test@example.test",
         BETTER_AUTH_SECRET: randomBytes(32).toString("hex"),
         DATABASE_URL: databaseUrl,
       },
@@ -79,7 +81,30 @@ test(
         body: JSON.stringify({ name: "Integration User", email, password: "valid-password-12345" }),
       });
       assert.equal(signup.status, 200, `Sign-up returned ${signup.status}`);
-      const cookies = signup.headers.getSetCookie();
+      const signupBody = await signup.json();
+      assert.equal(signupBody.token, null, "Unverified sign-up must not create a session token");
+      const duplicateSignup = await fetch(`${base}/api/auth/sign-up/email`, {
+        method: "POST",
+        headers: { "content-type": "application/json", origin: base },
+        body: JSON.stringify({ name: "Integration User", email, password: "valid-password-12345" }),
+      });
+      assert.equal(duplicateSignup.status, signup.status);
+      assert.equal((await duplicateSignup.json()).token, null);
+      const user = (await db.query('SELECT id FROM "user" WHERE email = $1', [email])).rows[0];
+      const unverifiedSignIn = await fetch(`${base}/api/auth/sign-in/email`, {
+        method: "POST",
+        headers: { "content-type": "application/json", origin: base },
+        body: JSON.stringify({ email, password: "valid-password-12345" }),
+      });
+      assert.equal(unverifiedSignIn.status, 403);
+      await db.query('UPDATE "user" SET email_verified = true WHERE id = $1', [user.id]);
+      const signin = await fetch(`${base}/api/auth/sign-in/email`, {
+        method: "POST",
+        headers: { "content-type": "application/json", origin: base },
+        body: JSON.stringify({ email, password: "valid-password-12345" }),
+      });
+      assert.equal(signin.status, 200, `Sign-in returned ${signin.status}`);
+      const cookies = signin.headers.getSetCookie();
       const sessionCookie = cookies.find((value) => value.includes("session_token="));
       assert.ok(sessionCookie, `No session cookie: ${cookies}`);
       assert.match(sessionCookie, /; Secure/i);
@@ -87,7 +112,6 @@ test(
       assert.match(sessionCookie, /; SameSite=Lax/i);
       assert.doesNotMatch(sessionCookie, /; Domain=/i);
       const cookie = sessionCookie.split(";")[0];
-      const user = (await db.query('SELECT id FROM "user" WHERE email = $1', [email])).rows[0];
 
       const getToken = async () => {
         const response = await fetch(`${base}/api/auth/token`, { headers: { cookie } });
@@ -124,7 +148,7 @@ test(
       assert.deepEqual(Object.keys(noOrg).sort(), expectedKeys);
       assert.equal(noOrg.sub, user.id);
       assert.equal(noOrg.email, email);
-      assert.equal(noOrg.emailVerified, false);
+      assert.equal(noOrg.emailVerified, true);
       assert.equal(noOrg.platformRole, "customer");
       assert.equal(noOrg.orgId, null);
       assert.equal(noOrg.orgRole, null);
@@ -155,6 +179,29 @@ test(
       const removedClaims = (await verify(await getToken())).payload;
       assert.equal(removedClaims.orgId, null);
       assert.equal(removedClaims.orgRole, null);
+
+      const resetRequest = async (requestedEmail) => {
+        const start = performance.now();
+        const response = await fetch(`${base}/api/auth/request-password-reset`, {
+          method: "POST",
+          headers: { "content-type": "application/json", origin: base },
+          body: JSON.stringify({ email: requestedEmail }),
+        });
+        return {
+          status: response.status,
+          body: await response.json(),
+          elapsed: performance.now() - start,
+        };
+      };
+      const knownReset = await resetRequest(email);
+      const unknownReset = await resetRequest(`missing-${randomUUID()}@example.test`);
+      assert.equal(knownReset.status, unknownReset.status);
+      assert.deepEqual(knownReset.body, unknownReset.body);
+      assert.ok(knownReset.elapsed < 5_000, `Known-email reset took ${knownReset.elapsed}ms`);
+      assert.ok(unknownReset.elapsed < 5_000, `Unknown-email reset took ${unknownReset.elapsed}ms`);
+      await resetRequest(email);
+      const fourthReset = await resetRequest(email);
+      assert.equal(fourthReset.status, 429);
 
       const oldKid = decodeProtectedHeader(noOrgToken).kid;
       await db.query("UPDATE \"jwks\" SET expires_at = now() - interval '1 minute' WHERE id = $1", [

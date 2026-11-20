@@ -32,6 +32,10 @@ test("auth service health, CORS, docs, and SIGTERM", { timeout: 35_000 }, async 
       DATABASE_URL: "postgresql://test:test@127.0.0.1:5432/test",
       BETTER_AUTH_SECRET: "test-only-secret-with-32-characters-minimum",
       TRUSTED_ORIGINS: "http://localhost:3000",
+      WEB_URL: "http://localhost:3000",
+      EMAIL_FROM: "BetterBasket <no-reply@example.test>",
+      EMAIL_ALLOWED_RECIPIENTS: "test@example.test",
+      RESEND_API_KEY: "re_test_testtesttesttesttest",
     },
     stdio: ["ignore", "pipe", "pipe"],
   });
