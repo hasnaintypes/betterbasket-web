@@ -74,7 +74,11 @@ test("JWT issuer verifies v2 claims and rejects tampering", async () => {
       orgId: "org-7",
       orgRole: "owner",
     });
-    const verifier = new JwksVerifier(issuer.issuer, issuer.jwksUrl);
+    const verifier = new JwksVerifier({
+      issuer: issuer.issuer,
+      audience: issuer.audience,
+      jwksUrl: issuer.jwksUrl,
+    });
     const claims = await verifier.verify(token);
     assert.equal(claims.sub, "user-42");
     assert.equal(claims.platformRole, "customer");

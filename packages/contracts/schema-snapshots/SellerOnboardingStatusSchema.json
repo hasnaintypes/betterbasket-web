@@ -2,9 +2,11 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "enum": [
     "active",
+    "closed",
     "pending",
     "stripe_pending",
-    "suspended"
+    "suspended",
+    "under_review"
   ],
   "type": "string"
 }

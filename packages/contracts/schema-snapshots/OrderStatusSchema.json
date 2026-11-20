@@ -3,12 +3,9 @@
   "enum": [
     "awaiting_payment",
     "cancelled",
-    "delivered",
-    "fulfilling",
-    "paid",
-    "pending",
-    "refunded",
-    "shipped"
+    "fulfilled",
+    "in_fulfilment",
+    "paid"
   ],
   "type": "string"
 }

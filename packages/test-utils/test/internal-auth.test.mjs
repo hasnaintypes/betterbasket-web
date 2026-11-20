@@ -119,7 +119,13 @@ test("two Nest services separate service and user tokens", async () => {
       UserController,
       "user",
       "get",
-      new JwtAuthGuard(new JwksVerifier(issuer.issuer, issuer.jwksUrl)),
+      new JwtAuthGuard(
+        new JwksVerifier({
+          issuer: issuer.issuer,
+          audience: issuer.audience,
+          jwksUrl: issuer.jwksUrl,
+        }),
+      ),
     ),
   );
   try {

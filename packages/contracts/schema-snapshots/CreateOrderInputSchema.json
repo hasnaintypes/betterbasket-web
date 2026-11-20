@@ -1,21 +1,51 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
   "properties": {
+    "expectedTotal": {
+      "additionalProperties": false,
+      "properties": {
+        "amount": {
+          "maximum": 9007199254740991,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "currency": {
+          "default": "USD",
+          "maxLength": 3,
+          "minLength": 3,
+          "type": "string"
+        }
+      },
+      "required": [
+        "amount"
+      ],
+      "type": "object"
+    },
     "items": {
       "items": {
+        "additionalProperties": false,
         "properties": {
           "productId": {
+            "maxLength": 128,
+            "minLength": 1,
             "type": "string"
           },
           "quantity": {
-            "exclusiveMinimum": 0,
-            "maximum": 9007199254740991,
+            "maximum": 99,
+            "minimum": 1,
             "type": "integer"
           },
           "variantId": {
-            "type": [
-              "string",
-              "null"
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
             ]
           }
         },
@@ -25,12 +55,62 @@
         ],
         "type": "object"
       },
+      "maxItems": 50,
       "minItems": 1,
       "type": "array"
+    },
+    "shippingAddress": {
+      "additionalProperties": false,
+      "properties": {
+        "city": {
+          "maxLength": 100,
+          "minLength": 1,
+          "type": "string"
+        },
+        "country": {
+          "pattern": "^[A-Z]{2}$",
+          "type": "string"
+        },
+        "line1": {
+          "maxLength": 200,
+          "minLength": 1,
+          "type": "string"
+        },
+        "line2": {
+          "maxLength": 200,
+          "minLength": 1,
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 120,
+          "minLength": 1,
+          "type": "string"
+        },
+        "postalCode": {
+          "maxLength": 32,
+          "minLength": 1,
+          "type": "string"
+        },
+        "region": {
+          "maxLength": 100,
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "city",
+        "country",
+        "line1",
+        "name",
+        "postalCode",
+        "region"
+      ],
+      "type": "object"
     }
   },
   "required": [
-    "items"
+    "items",
+    "shippingAddress"
   ],
   "type": "object"
 }

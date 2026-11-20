@@ -4,8 +4,10 @@ import { OrgRoleSchema } from "./common.js";
 export const SellerOnboardingStatusSchema = z.enum([
   "pending",
   "stripe_pending",
+  "under_review",
   "active",
   "suspended",
+  "closed",
 ]);
 export type SellerOnboardingStatus = z.infer<typeof SellerOnboardingStatusSchema>;
 

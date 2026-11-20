@@ -2,10 +2,17 @@ import { Injectable, NotFoundException, NotImplementedException } from "@nestjs/
 import { eq, and } from "drizzle-orm";
 import type { CreateOrderInput } from "@betterbasket/contracts";
 import { db } from "../db/client";
-import { orders, orderStatusEnum } from "../db/schema";
+import { orders } from "../db/schema";
+import { transitionSubOrder } from "./transition";
+import type { SubOrderStatus, TransitionActor } from "./state-machine";
 
 @Injectable()
 export class OrdersService {
+  /** Internal callers supply an authorized actor; no public transition route exists. */
+  transition(subOrderId: string, to: SubOrderStatus, actor: TransitionActor, reason?: string) {
+    return transitionSubOrder(db, subOrderId, to, actor, reason);
+  }
+
   /**
    * TODO(Tier 2): resolve authoritative unit prices + sellerId per line item
    * by calling product-service (never trust client-supplied prices). Once
@@ -28,16 +35,5 @@ export class OrdersService {
 
   async findMine(buyerId: string) {
     return db.query.orders.findMany({ where: eq(orders.buyerId, buyerId) });
-  }
-
-  async updateStatus(id: string, status: (typeof orderStatusEnum.enumValues)[number]) {
-    const [updated] = await db
-      .update(orders)
-      .set({ status, updatedAt: new Date() })
-      .where(eq(orders.id, id))
-      .returning();
-    if (!updated) throw new NotFoundException(`Order ${id} not found`);
-    // TODO(Tier 3): publish Topics.OrderStatusChanged.
-    return updated;
   }
 }

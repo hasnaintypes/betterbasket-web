@@ -1,32 +1,49 @@
 import { createRemoteJWKSet, jwtVerify, type JWTVerifyResult } from "jose";
 import { AuthTokenClaimsSchema, type AuthTokenClaims } from "@betterbasket/contracts";
 
-/**
- * Every non-auth service verifies Better Auth JWTs locally against the
- * auth-service's JWKS endpoint (`${AUTH_SERVICE_URL}/api/auth/jwks`) — no
- * network call to auth-service on every request, just a cached public key set.
- */
+export interface JwksVerifierOptions {
+  issuer: string;
+  audience: string;
+  jwksUrl: string;
+  cacheMaxAgeMs?: number;
+  cooldownMs?: number;
+}
+
+/** Verifies user JWTs with a cached, private auth-service key set. */
 export class JwksVerifier {
   private readonly jwks: ReturnType<typeof createRemoteJWKSet>;
 
-  constructor(
-    private readonly issuer: string,
-    jwksUrl: string,
-    private readonly audience: string = issuer,
-  ) {
-    this.jwks = createRemoteJWKSet(new URL(jwksUrl));
+  constructor(private readonly options: JwksVerifierOptions) {
+    if (!options.issuer || !options.audience)
+      throw new Error("JWT issuer and audience are required");
+    this.jwks = createRemoteJWKSet(new URL(options.jwksUrl), {
+      cacheMaxAge: options.cacheMaxAgeMs,
+      cooldownDuration: options.cooldownMs,
+    });
   }
 
   async verify(token: string): Promise<AuthTokenClaims> {
     const { payload }: JWTVerifyResult = await jwtVerify(token, this.jwks, {
-      issuer: this.issuer,
-      audience: this.audience,
+      issuer: this.options.issuer,
+      audience: this.options.audience,
+      algorithms: ["EdDSA"],
+      clockTolerance: 5,
     });
     return AuthTokenClaimsSchema.parse(payload);
   }
 }
 
+let processVerifier: JwksVerifier | undefined;
+
 export function createJwksVerifierFromEnv(): JwksVerifier {
-  const authServiceUrl = process.env.AUTH_SERVICE_URL ?? "http://localhost:4001";
-  return new JwksVerifier(authServiceUrl, `${authServiceUrl}/api/auth/jwks`);
+  if (processVerifier) return processVerifier;
+  const issuer = process.env.AUTH_ISSUER;
+  const jwksUrl = process.env.AUTH_JWKS_URL;
+  if (!issuer || !jwksUrl) throw new Error("AUTH_ISSUER and AUTH_JWKS_URL are required");
+  processVerifier = new JwksVerifier({
+    issuer,
+    audience: process.env.AUTH_AUDIENCE || issuer,
+    jwksUrl,
+  });
+  return processVerifier;
 }

@@ -12,13 +12,16 @@
     "test": "jest",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate"
+    "db:migrate": "drizzle-kit migrate",
+    "db:check": "drizzle-kit check",
+    "test:integration": "pnpm build && node --test test/*.integration.mjs"
   },
   "dependencies": {
     "@betterbasket/auth-shared": "workspace:*",
     "@betterbasket/contracts": "workspace:*",
     "@betterbasket/kafka-client": "workspace:*",
     "@betterbasket/logger": "workspace:*",
+    "@betterbasket/outbox": "workspace:*",
     "@betterbasket/runtime": "workspace:*",
     "@nestjs/common": "^11.2.3",
     "@nestjs/config": "^4.0.4",
