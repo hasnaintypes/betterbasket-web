@@ -52,6 +52,7 @@ export function main(argv = process.argv.slice(2)) {
           EMAIL_FROM: "BetterBasket <no-reply@example.test>",
           EMAIL_ALLOWED_RECIPIENTS: "test@example.test",
           BETTER_AUTH_SECRET: "schema-generation-only-secret-with-at-least-32-bytes",
+          AUDIT_IP_SALT: "schema-generation-only-audit-salt-with-32-bytes",
           DATABASE_URL: "postgresql://schema:schema@localhost:5432/schema",
         },
       },

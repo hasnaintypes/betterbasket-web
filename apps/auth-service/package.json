@@ -17,7 +17,7 @@
     "db:check": "drizzle-kit check",
     "auth:generate-schema": "node scripts/generate-auth-schema.mjs --write",
     "auth:check-schema": "node scripts/generate-auth-schema.mjs --check",
-    "auth:create-admin": "auth create-admin --config src/auth/auth.cli.ts"
+    "auth:create-admin": "node -r ts-node/register scripts/create-admin.ts"
   },
   "dependencies": {
     "@betterbasket/contracts": "workspace:*",
