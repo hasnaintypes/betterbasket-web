@@ -1,10 +1,20 @@
-import { Injectable, ConflictException, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  Injectable,
+  ConflictException,
+  NotFoundException,
+} from "@nestjs/common";
 import { eq } from "drizzle-orm";
 import Stripe from "stripe";
-import { slugify } from "@betterbasket/utils";
 import type { CreateSellerInput } from "@betterbasket/contracts";
 import { db } from "../db/client";
 import { sellers } from "../db/schema";
+import {
+  InvalidSellerSlugError,
+  SellerSlugCollisionError,
+  insertWithSellerSlug,
+  sellerSlugBase,
+} from "./slug";
 
 @Injectable()
 export class SellersService {
@@ -16,6 +26,13 @@ export class SellersService {
    * `authClient.organization.create()` before calling this endpoint).
    */
   async onboard(organizationId: string, input: CreateSellerInput) {
+    let slugBase: string;
+    try {
+      slugBase = sellerSlugBase(input.slug);
+    } catch (error) {
+      if (error instanceof InvalidSellerSlugError) throw new BadRequestException(error.message);
+      throw error;
+    }
     const existing = await db.query.sellers.findFirst({
       where: eq(sellers.organizationId, organizationId),
     });
@@ -26,17 +43,29 @@ export class SellersService {
       capabilities: { card_payments: { requested: true }, transfers: { requested: true } },
     });
 
-    const [seller] = await db
-      .insert(sellers)
-      .values({
-        organizationId,
-        storeName: input.storeName,
-        slug: `${slugify(input.slug)}-${Date.now().toString(36)}`,
-        description: input.description,
-        stripeAccountId: account.id,
-        status: "stripe_pending",
-      })
-      .returning();
+    let seller: typeof sellers.$inferSelect;
+    try {
+      seller = await insertWithSellerSlug(slugBase, async (slug) => {
+        const [created] = await db
+          .insert(sellers)
+          .values({
+            organizationId,
+            storeName: input.storeName,
+            slug,
+            description: input.description,
+            stripeAccountId: account.id,
+            status: "stripe_pending",
+          })
+          .returning();
+        if (!created) throw new Error("Seller insert returned no row");
+        return created;
+      });
+    } catch (error) {
+      if (error instanceof SellerSlugCollisionError) {
+        throw new ConflictException("Could not allocate a unique seller slug");
+      }
+      throw error;
+    }
 
     // TODO(Tier 3): publish Topics.SellerOnboarded once the Stripe account
     // finishes onboarding (via Stripe `account.updated` webhook), not here.

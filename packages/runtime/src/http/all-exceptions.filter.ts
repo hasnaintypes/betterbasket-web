@@ -82,6 +82,31 @@ function httpResponse(exception: HttpException): {
   };
 }
 
+export function toErrorEnvelope(exception: unknown, requestId: string) {
+  const result =
+    exception instanceof z.ZodError
+      ? {
+          status: HttpStatus.BAD_REQUEST,
+          code: "VALIDATION_FAILED",
+          message: "Validation failed",
+          details: zodDetails(exception),
+        }
+      : exception instanceof HttpException
+        ? httpResponse(exception)
+        : {
+            status: HttpStatus.INTERNAL_SERVER_ERROR,
+            code: "INTERNAL_ERROR",
+            message: "Internal server error",
+            details: [],
+          };
+  return {
+    status: result.status,
+    body: {
+      error: { code: result.code, message: result.message, requestId, details: result.details },
+    },
+  };
+}
+
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
   constructor(@Inject(REQUEST_LOGGER) private readonly logger: Logger) {}
@@ -95,29 +120,10 @@ export class AllExceptionsFilter implements ExceptionFilter {
       if (!response.writableEnded) response.end();
       return;
     }
-    const result =
-      exception instanceof z.ZodError
-        ? {
-            status: HttpStatus.BAD_REQUEST,
-            code: "VALIDATION_FAILED",
-            message: "Validation failed",
-            details: zodDetails(exception),
-          }
-        : exception instanceof HttpException
-          ? httpResponse(exception)
-          : {
-              status: HttpStatus.INTERNAL_SERVER_ERROR,
-              code: "INTERNAL_ERROR",
-              message: "Internal server error",
-              details: [],
-            };
+    const result = toErrorEnvelope(exception, requestId);
     response.setHeader("X-Request-Id", requestId);
     response.setHeader("Content-Type", "application/json; charset=utf-8");
     response.statusCode = result.status;
-    response.end(
-      JSON.stringify({
-        error: { code: result.code, message: result.message, requestId, details: result.details },
-      }),
-    );
+    response.end(JSON.stringify(result.body));
   }
 }

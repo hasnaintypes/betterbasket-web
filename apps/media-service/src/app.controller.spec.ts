@@ -10,7 +10,9 @@ jest.setTimeout(60_000);
 const validEnv = {
   NODE_ENV: "test",
   PORT: "4007",
-  AUTH_SERVICE_URL: "http://127.0.0.1:4001",
+  AUTH_ISSUER: "http://127.0.0.1:4000",
+  AUTH_AUDIENCE: "http://127.0.0.1:4000",
+  AUTH_JWKS_URL: "http://127.0.0.1:4001/api/auth/jwks",
   IMAGEKIT_PUBLIC_KEY: "public_test_aaaaaaaaaaaaaaaa",
   IMAGEKIT_PRIVATE_KEY: "private_test_aaaaaaaaaaaaaaaa",
   IMAGEKIT_URL_ENDPOINT: "https://ik.imagekit.io/test",

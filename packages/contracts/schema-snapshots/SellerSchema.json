@@ -42,9 +42,11 @@
       "default": "pending",
       "enum": [
         "active",
+        "closed",
         "pending",
         "stripe_pending",
-        "suspended"
+        "suspended",
+        "under_review"
       ],
       "type": "string"
     },

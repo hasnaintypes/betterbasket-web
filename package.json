@@ -20,7 +20,9 @@
     "check:md-links": "node .github/scripts/check-md-links.mjs",
     "test:scripts": "node --test .github/scripts/*.test.mjs scripts/*.test.mjs",
     "check:env-examples": "node .github/scripts/check-env-examples.mjs",
-    "check:gateway-startup": "node .github/scripts/test-gateway-startup.mjs"
+    "check:gateway-startup": "node .github/scripts/test-gateway-startup.mjs",
+    "test:frontend-shells": "node scripts/check-frontend-shells.mjs",
+    "test:frontend-axe": "node scripts/check-frontend-axe.mjs"
   },
   "devDependencies": {
     "prettier": "^3.3.3",

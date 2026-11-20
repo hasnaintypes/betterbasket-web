@@ -10,10 +10,14 @@ jest.setTimeout(60_000);
 const validEnv = {
   NODE_ENV: "test",
   PORT: "4005",
-  AUTH_SERVICE_URL: "http://127.0.0.1:4001",
+  AUTH_ISSUER: "http://127.0.0.1:4000",
+  AUTH_AUDIENCE: "http://127.0.0.1:4000",
+  AUTH_JWKS_URL: "http://127.0.0.1:4001/api/auth/jwks",
   DATABASE_URL: "postgresql://user:password@db.example.test/db",
   STRIPE_SECRET_KEY: "sk_test_aaaaaaaaaaaaaaaaaaaa",
-  STRIPE_WEBHOOK_SECRET: "whsec_aaaaaaaaaaaaaaaaaaaa",
+  STRIPE_ACCOUNT_WEBHOOK_SECRET: "whsec_account_aaaaaaaaaaaaaaaaaaaa",
+  STRIPE_CONNECT_WEBHOOK_SECRET: "whsec_connect_aaaaaaaaaaaaaaaaaaaa",
+  PAYMENTS_LIVE_MODE_ENABLED: "false",
   PLATFORM_FEE_BPS: "1000",
   KAFKA_BROKERS: "broker.example.test:9092",
   KAFKA_USERNAME: "user",
@@ -45,6 +49,47 @@ describe("payment-service bootstrap", () => {
     );
     expect(child.status).not.toBe(0);
     expect(child.stderr).toContain("STRIPE_SECRET_KEY");
+  });
+
+  it.each(["STRIPE_ACCOUNT_WEBHOOK_SECRET", "STRIPE_CONNECT_WEBHOOK_SECRET"])(
+    "refuses to boot without %s",
+    (missing) => {
+      const env: NodeJS.ProcessEnv = { ...process.env, ...validEnv };
+      delete env[missing];
+      const child = spawnSync(
+        process.execPath,
+        ["-r", "ts-node/register/transpile-only", "src/main.ts"],
+        {
+          cwd: process.cwd(),
+          env,
+          encoding: "utf8",
+          timeout: 10_000,
+        },
+      );
+      expect(child.status).not.toBe(0);
+      expect(child.stderr).toContain(missing);
+    },
+  );
+
+  it("refuses a live Stripe key while live mode is disabled", () => {
+    const env: NodeJS.ProcessEnv = {
+      ...process.env,
+      ...validEnv,
+      STRIPE_SECRET_KEY: "sk_live_aaaaaaaaaaaaaaaaaaaa",
+    };
+    const child = spawnSync(
+      process.execPath,
+      ["-r", "ts-node/register/transpile-only", "src/main.ts"],
+      {
+        cwd: process.cwd(),
+        env,
+        encoding: "utf8",
+        timeout: 10_000,
+      },
+    );
+    expect(child.status).not.toBe(0);
+    expect(child.stderr).toContain("STRIPE_SECRET_KEY");
+    expect(child.stderr).not.toContain(env.STRIPE_SECRET_KEY);
   });
 
   it("boots with no HTTP CORS headers and drains readiness on shutdown", async () => {

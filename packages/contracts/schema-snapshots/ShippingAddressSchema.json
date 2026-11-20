@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "city": {
+      "maxLength": 100,
+      "minLength": 1,
+      "type": "string"
+    },
+    "country": {
+      "pattern": "^[A-Z]{2}$",
+      "type": "string"
+    },
+    "line1": {
+      "maxLength": 200,
+      "minLength": 1,
+      "type": "string"
+    },
+    "line2": {
+      "maxLength": 200,
+      "minLength": 1,
+      "type": "string"
+    },
+    "name": {
+      "maxLength": 120,
+      "minLength": 1,
+      "type": "string"
+    },
+    "postalCode": {
+      "maxLength": 32,
+      "minLength": 1,
+      "type": "string"
+    },
+    "region": {
+      "maxLength": 100,
+      "minLength": 1,
+      "type": "string"
+    }
+  },
+  "required": [
+    "city",
+    "country",
+    "line1",
+    "name",
+    "postalCode",
+    "region"
+  ],
+  "type": "object"
+}
