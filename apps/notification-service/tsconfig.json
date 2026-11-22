@@ -2,7 +2,8 @@
   "extends": "@betterbasket/config/typescript/nestjs.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "rootDir": "./src"
+    "rootDir": "./src",
+    "jsx": "react-jsx"
   },
   "include": ["src/**/*"]
 }
