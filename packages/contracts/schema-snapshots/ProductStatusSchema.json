@@ -3,7 +3,8 @@
   "enum": [
     "active",
     "archived",
-    "draft"
+    "draft",
+    "unpublished"
   ],
   "type": "string"
 }

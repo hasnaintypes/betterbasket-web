@@ -1,9 +1,10 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { ConflictException, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
-import { slugify } from "@betterbasket/utils";
+import { randomUUID } from "node:crypto";
 import type { CreateProductInput, PaginationQuery } from "@betterbasket/contracts";
 import { ProductDocument, type ProductMongoDocument } from "./schemas/product.schema";
+import { isSellerSkuDuplicate, isSlugDuplicate, productSlug } from "./slug";
 
 @Injectable()
 export class ProductsService {
@@ -11,19 +12,36 @@ export class ProductsService {
     @InjectModel(ProductDocument.name) private readonly productModel: Model<ProductMongoDocument>,
   ) {}
 
-  async create(sellerId: string, organizationId: string, input: CreateProductInput) {
-    const created = await this.productModel.create({
-      ...input,
-      sellerId,
-      organizationId,
-      slug: `${slugify(input.title)}-${Date.now().toString(36)}`,
-      status: "draft",
-    });
-    return created.toObject();
+  async create(sellerId: string, input: CreateProductInput) {
+    const variants = input.variants.map((variant) => ({ ...variant, variantId: randomUUID() }));
+    for (let attempt = 0; attempt < 5; attempt++) {
+      try {
+        const created = await this.productModel.create({
+          ...input,
+          variants,
+          sellerId,
+          slug: productSlug(input.title),
+          status: "draft",
+          sellerStatus: "other",
+          version: 0,
+          schemaVersion: 2,
+        });
+        return created.toObject();
+      } catch (error) {
+        if (isSellerSkuDuplicate(error))
+          throw new ConflictException("SKU already used by this seller");
+        if (!isSlugDuplicate(error)) throw error;
+      }
+    }
+    throw new ConflictException("Could not allocate a unique product slug");
   }
 
   async findPublished({ page, limit }: PaginationQuery, category?: string) {
-    const filter = { status: "active" as const, ...(category ? { category } : {}) };
+    const filter = {
+      status: "active" as const,
+      sellerStatus: "active" as const,
+      ...(category ? { category } : {}),
+    };
     const [items, total] = await Promise.all([
       this.productModel
         .find(filter)
@@ -41,7 +59,9 @@ export class ProductsService {
   }
 
   async findBySlug(slug: string) {
-    const product = await this.productModel.findOne({ slug, status: "active" }).lean();
+    const product = await this.productModel
+      .findOne({ slug, status: "active", sellerStatus: "active" })
+      .lean();
     if (!product) throw new NotFoundException(`Product '${slug}' not found`);
     return product;
   }

@@ -1,5 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
   "properties": {
     "basePrice": {
       "properties": {
@@ -9,18 +10,19 @@
           "type": "integer"
         },
         "currency": {
-          "default": "USD",
-          "maxLength": 3,
-          "minLength": 3,
+          "const": "USD",
           "type": "string"
         }
       },
       "required": [
-        "amount"
+        "amount",
+        "currency"
       ],
       "type": "object"
     },
     "category": {
+      "maxLength": 100,
+      "minLength": 1,
       "type": "string"
     },
     "description": {
@@ -32,8 +34,10 @@
       "default": [],
       "items": {
         "format": "uri",
+        "maxLength": 2048,
         "type": "string"
       },
+      "maxItems": 12,
       "type": "array"
     },
     "title": {
@@ -47,10 +51,14 @@
         "properties": {
           "options": {
             "additionalProperties": {
+              "maxLength": 100,
+              "minLength": 1,
               "type": "string"
             },
             "default": {},
             "propertyNames": {
+              "maxLength": 40,
+              "minLength": 1,
               "type": "string"
             },
             "type": "object"
@@ -63,18 +71,19 @@
                 "type": "integer"
               },
               "currency": {
-                "default": "USD",
-                "maxLength": 3,
-                "minLength": 3,
+                "const": "USD",
                 "type": "string"
               }
             },
             "required": [
-              "amount"
+              "amount",
+              "currency"
             ],
             "type": "object"
           },
           "sku": {
+            "maxLength": 64,
+            "minLength": 1,
             "type": "string"
           },
           "stock": {
@@ -90,6 +99,7 @@
         ],
         "type": "object"
       },
+      "maxItems": 100,
       "type": "array"
     }
   },

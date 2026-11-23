@@ -34,6 +34,6 @@ export class ProductsController {
     @Req() req: AuthenticatedRequest,
     @Body(new ZodValidationPipe(CreateProductInputSchema)) body: CreateProductInput,
   ) {
-    return this.productsService.create(req.tenant!.sellerId, req.user.orgId ?? "", body);
+    return this.productsService.create(req.tenant!.sellerId, body);
   }
 }
