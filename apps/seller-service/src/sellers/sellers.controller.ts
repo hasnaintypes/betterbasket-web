@@ -1,5 +1,14 @@
-import { Body, Controller, Get, Post, Query, Req } from "@nestjs/common";
-import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Post,
+  Query,
+  Req,
+} from "@nestjs/common";
+import { ApiBearerAuth, ApiBody, ApiOkResponse, ApiTags } from "@nestjs/swagger";
 import { Capability, HighRisk, type AuthenticatedRequest } from "@betterbasket/auth-shared";
 import { CreateSellerInputSchema, type CreateSellerInput } from "@betterbasket/contracts";
 import { ZodValidationPipe } from "@betterbasket/runtime";
@@ -11,16 +20,46 @@ export class SellersController {
   constructor(private readonly sellersService: SellersService) {}
 
   @Post("onboard")
-  @Capability("seller:write")
+  @HttpCode(200)
+  @Capability("seller:register")
   @ApiBearerAuth()
+  @ApiBody({
+    schema: {
+      type: "object",
+      required: ["storeName", "slug", "country", "supportEmail"],
+      additionalProperties: false,
+      properties: {
+        storeName: { type: "string" },
+        slug: { type: "string" },
+        description: { type: "string" },
+        country: { type: "string", minLength: 2, maxLength: 2 },
+        supportEmail: { type: "string", format: "email" },
+      },
+    },
+  })
+  @ApiOkResponse({
+    schema: {
+      type: "object",
+      required: ["id", "status", "slug"],
+      properties: {
+        id: { type: "string", format: "uuid" },
+        status: {
+          type: "string",
+          enum: ["pending", "stripe_pending", "under_review", "active", "suspended", "closed"],
+        },
+        slug: { type: "string" },
+      },
+    },
+  })
   onboard(
     @Req() req: AuthenticatedRequest,
     @Body(new ZodValidationPipe(CreateSellerInputSchema)) body: CreateSellerInput,
   ) {
     if (!req.user.orgId) {
-      throw new Error(
-        "No active organization — create one via authClient.organization.create() first",
-      );
+      throw new BadRequestException({
+        code: "VALIDATION_FAILED",
+        message: "Create and activate an organization before registering a seller",
+      });
     }
     return this.sellersService.onboard(req.user.orgId, body);
   }

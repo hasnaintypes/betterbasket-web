@@ -77,6 +77,13 @@ export class DefaultCapabilityResolver implements CapabilityResolver {
         ? { allowed: true }
         : { allowed: false, reason: "EMAIL_NOT_VERIFIED" };
     }
+    // Registration has no seller tenant yet. The signed owner membership claim
+    // is checked here; established seller capabilities still require a provider.
+    if (capability === "seller:register") {
+      if (!user.emailVerified) return { allowed: false, reason: "EMAIL_NOT_VERIFIED" };
+      // Let the controller give a useful 400 when no organization is active.
+      return { allowed: !user.orgId || user.orgRole === "owner" };
+    }
     if (capability === "admin:*") return { allowed: user.platformRole === "admin" };
     const tenant = await this.sellerAccess.resolve(user, capability, highRisk);
     return tenant ? { allowed: true, tenant } : { allowed: false };
@@ -134,6 +141,11 @@ export class CapabilityGuard implements CanActivate {
     if (!request.user) throw new UnauthorizedException({ code: "UNAUTHENTICATED" });
     if (buyerCapabilities.has(capability) && !request.user.emailVerified)
       throw new ForbiddenException({ code: "EMAIL_NOT_VERIFIED" });
+    if (capability === "seller:register") {
+      if (!request.user.emailVerified) throw new ForbiddenException({ code: "EMAIL_NOT_VERIFIED" });
+      if (request.user.orgId && request.user.orgRole !== "owner")
+        throw new ForbiddenException({ code: "FORBIDDEN" });
+    }
     if (capability === "admin:*" && request.user.platformRole !== "admin")
       throw new ForbiddenException({ code: "FORBIDDEN" });
     let decision: CapabilityDecision;
@@ -147,7 +159,12 @@ export class CapabilityGuard implements CanActivate {
       throw new ForbiddenException({ code: "FORBIDDEN" });
     }
     if (!decision.allowed) throw new ForbiddenException({ code: decision.reason ?? "FORBIDDEN" });
-    if (!buyerCapabilities.has(capability) && capability !== "admin:*" && !decision.tenant)
+    if (
+      !buyerCapabilities.has(capability) &&
+      capability !== "seller:register" &&
+      capability !== "admin:*" &&
+      !decision.tenant
+    )
       throw new ForbiddenException({ code: "FORBIDDEN" });
     if (decision.tenant) request.tenant = decision.tenant;
     return true;

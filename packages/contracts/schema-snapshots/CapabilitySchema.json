@@ -15,6 +15,7 @@
     "product:read",
     "product:write",
     "seller:read",
+    "seller:register",
     "seller:write",
     "stripe:manage"
   ],

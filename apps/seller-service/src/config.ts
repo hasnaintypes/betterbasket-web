@@ -9,6 +9,7 @@ export const sellerEnvSchema = z.object({
   AUTH_JWKS_URL: url(),
   DATABASE_URL: z.string().min(1),
   STRIPE_SECRET_KEY: secret(),
+  SUPPORTED_SELLER_COUNTRIES: z.string().default(""),
   KAFKA_BROKERS: z.string().min(1),
   KAFKA_USERNAME: z.string().min(1),
   KAFKA_PASSWORD: z.string().min(1),

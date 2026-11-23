@@ -18,14 +18,22 @@ import {
 
 @Injectable()
 export class SellersService {
-  private readonly stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
-
-  /**
-   * Creates the commerce-side Seller row + a Stripe Connect Express account.
-   * `organizationId` must already exist (created client-side via
-   * `authClient.organization.create()` before calling this endpoint).
-   */
+  /** Creates the pending commerce record before any provider side effect. */
   async onboard(organizationId: string, input: CreateSellerInput) {
+    const existing = await db.query.sellers.findFirst({
+      where: eq(sellers.organizationId, organizationId),
+    });
+    if (existing) return { id: existing.id, status: existing.status, slug: existing.slug };
+    const allowed = (process.env.SUPPORTED_SELLER_COUNTRIES ?? "")
+      .split(",")
+      .map((country) => country.trim().toUpperCase())
+      .filter(Boolean);
+    if (process.env.NODE_ENV !== "test" && !allowed.includes(input.country)) {
+      throw new BadRequestException({
+        code: "VALIDATION_FAILED",
+        message: "Seller registration is unavailable for this country",
+      });
+    }
     let slugBase: string;
     try {
       slugBase = sellerSlugBase(input.slug);
@@ -33,17 +41,7 @@ export class SellersService {
       if (error instanceof InvalidSellerSlugError) throw new BadRequestException(error.message);
       throw error;
     }
-    const existing = await db.query.sellers.findFirst({
-      where: eq(sellers.organizationId, organizationId),
-    });
-    if (existing) throw new ConflictException("Seller already onboarded for this organization");
-
-    const account = await this.stripe.accounts.create({
-      type: "express",
-      capabilities: { card_payments: { requested: true }, transfers: { requested: true } },
-    });
-
-    let seller: typeof sellers.$inferSelect;
+    let seller: typeof sellers.$inferSelect | undefined;
     try {
       seller = await insertWithSellerSlug(slugBase, async (slug) => {
         const [created] = await db
@@ -53,11 +51,12 @@ export class SellersService {
             storeName: input.storeName,
             slug,
             description: input.description,
-            stripeAccountId: account.id,
-            status: "stripe_pending",
+            country: input.country,
+            supportEmail: input.supportEmail,
+            status: "pending",
           })
+          .onConflictDoNothing({ target: sellers.organizationId })
           .returning();
-        if (!created) throw new Error("Seller insert returned no row");
         return created;
       });
     } catch (error) {
@@ -67,9 +66,11 @@ export class SellersService {
       throw error;
     }
 
-    // TODO(Tier 3): publish Topics.SellerOnboarded once the Stripe account
-    // finishes onboarding (via Stripe `account.updated` webhook), not here.
-    return seller;
+    const row =
+      seller ??
+      (await db.query.sellers.findFirst({ where: eq(sellers.organizationId, organizationId) }));
+    if (!row) throw new Error("Seller insert returned no row");
+    return { id: row.id, status: row.status, slug: row.slug };
   }
 
   async findByOrganization(organizationId: string) {
@@ -83,7 +84,8 @@ export class SellersService {
   /** Generates the Stripe-hosted onboarding link the seller-portal redirects to. */
   async createOnboardingLink(organizationId: string, returnUrl: string, refreshUrl: string) {
     const seller = await this.findByOrganization(organizationId);
-    const link = await this.stripe.accountLinks.create({
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+    const link = await stripe.accountLinks.create({
       account: seller.stripeAccountId!,
       type: "account_onboarding",
       return_url: returnUrl,

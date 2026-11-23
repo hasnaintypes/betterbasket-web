@@ -28,6 +28,22 @@ Use a disposable development branch or schema for migration tests; set
 isolated schemas and never prints the URL. Do not run the test against a
 production database.
 
+## Seller registration
+
+`POST /sellers/onboard` accepts a verified owner's bearer token with an active
+organization and a JSON body containing `storeName`, `slug`, `country` (uppercase
+ISO 3166-1 alpha-2), `supportEmail`, and optional `description`. The organization
+ID comes only from the verified token. The route returns HTTP 200 with
+`{ id, status, slug }`; a repeat request for the same organization returns the
+existing seller, including after simultaneous submits. A new seller starts in
+`pending`. This route does not create a Stripe account.
+
+Set `SUPPORTED_SELLER_COUNTRIES` to a comma-separated list of allowed country
+codes. An empty value disables new registrations outside `NODE_ENV=test`.
+Email must be verified; a non-owner gets 403, and a verified user without an
+active organization gets 400. Existing seller operations remain behind the
+seller access provider and are denied until it is implemented.
+
 Store slugs are normalized, checked against reserved words, and given a random
 suffix. Only slug unique-index collisions are retried. The migration installs
 a trigger that rejects slug changes after approval, including legacy rows
