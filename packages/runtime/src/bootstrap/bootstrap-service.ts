@@ -2,6 +2,7 @@ import type { INestApplication, LoggerService, Type } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import { createLogger, type Logger } from "@betterbasket/logger";
+import { CapabilityGuard, JwtAuthGuard, type CapabilityResolver } from "@betterbasket/auth-shared";
 import type { Express, NextFunction, Request, Response } from "express";
 import { AllExceptionsFilter } from "../http/all-exceptions.filter";
 import { RequestIdMiddleware } from "../http/request-id.middleware";
@@ -62,6 +63,7 @@ class PinoNestLogger implements LoggerService {
 }
 
 export interface BootstrapServiceOptions {
+  capabilityResolver?: CapabilityResolver;
   bodyParser?: boolean;
   rawBody?: boolean;
   beforeRoutes?: (app: INestApplication) => void | Promise<void>;
@@ -93,6 +95,7 @@ export async function bootstrapService({
   const middleware = new RequestIdMiddleware(logger);
   app.use((req: Request, res: Response, next: NextFunction) => middleware.use(req, res, next));
   app.useGlobalFilters(new AllExceptionsFilter(logger));
+  app.useGlobalGuards(new JwtAuthGuard(), new CapabilityGuard(options.capabilityResolver));
 
   const registry = new ReadinessRegistry();
   registries.set(app, registry);

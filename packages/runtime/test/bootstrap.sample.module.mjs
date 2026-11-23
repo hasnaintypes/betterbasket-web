@@ -3,6 +3,7 @@ import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
 const { Controller, Get, Module, Post, Req } = require("@nestjs/common");
+const { Public } = require("@betterbasket/auth-shared");
 
 class ProbeController {
   slow() {
@@ -25,6 +26,7 @@ Post("raw")(
   "raw",
   Object.getOwnPropertyDescriptor(ProbeController.prototype, "raw"),
 );
+Public()(ProbeController);
 Req()(ProbeController.prototype, "raw", 0);
 
 class BootstrapSampleModule {}

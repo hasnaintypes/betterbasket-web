@@ -15,15 +15,16 @@
     "test": "pnpm build && node --test test/*.test.mjs"
   },
   "dependencies": {
+    "@betterbasket/auth-shared": "workspace:*",
     "@betterbasket/contracts": "workspace:*",
     "@nestjs/common": "^11.2.3",
     "@nestjs/core": "^11.2.3",
     "@nestjs/testing": "^11.2.3",
     "jose": "^6.2.12",
+    "reflect-metadata": "^0.2.2",
     "supertest": "^7.0.0"
   },
   "devDependencies": {
-    "@betterbasket/auth-shared": "workspace:*",
     "@betterbasket/config": "workspace:*",
     "@nestjs/platform-express": "^11.2.8",
     "@types/node": "^22.7.4",

@@ -6,8 +6,10 @@ import {
   type ExecutionContext,
   UnauthorizedException,
   UseGuards,
+  SetMetadata,
 } from "@nestjs/common";
 import { InternalTokenVerifier } from "./internal-token.js";
+import { INTERNAL_KEY } from "./nestjs-guard.js";
 
 @Injectable()
 export class InternalAuthGuard implements CanActivate {
@@ -36,5 +38,5 @@ export class InternalAuthGuard implements CanActivate {
 
 /** Protect only routes under /internal/*. */
 export function Internal() {
-  return applyDecorators(UseGuards(InternalAuthGuard));
+  return applyDecorators(SetMetadata(INTERNAL_KEY, true), UseGuards(InternalAuthGuard));
 }

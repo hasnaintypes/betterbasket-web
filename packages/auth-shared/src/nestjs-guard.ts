@@ -1,75 +1,155 @@
 import {
+  ForbiddenException,
   Injectable,
+  SetMetadata,
+  UnauthorizedException,
   type CanActivate,
   type ExecutionContext,
-  UnauthorizedException,
-  ForbiddenException,
-  SetMetadata,
-  UseGuards,
-  applyDecorators,
 } from "@nestjs/common";
-import type { PlatformRole } from "@betterbasket/contracts";
+import type { AuthTokenClaims, Capability as CapabilityName } from "@betterbasket/contracts";
 import { errors } from "jose";
 import { JwksVerifier, createJwksVerifierFromEnv } from "./jwks-verifier.js";
 
-const ROLES_KEY = "betterbasket:roles";
+export const PUBLIC_KEY = "betterbasket:public";
+export const CAPABILITY_KEY = "betterbasket:capability";
+export const HIGH_RISK_KEY = "betterbasket:high-risk";
+export const INTERNAL_KEY = "betterbasket:internal";
 
-/** Restricts a controller/handler to one or more platform roles (customer/admin). */
-export const Roles = (...roles: PlatformRole[]) => SetMetadata(ROLES_KEY, roles);
+export const Public = () => SetMetadata(PUBLIC_KEY, true);
+export const Capability = (capability: CapabilityName) => SetMetadata(CAPABILITY_KEY, capability);
+export const HighRisk = () => SetMetadata(HIGH_RISK_KEY, true);
 
-/**
- * Verifies the `Authorization: Bearer <jwt>` header against auth-service's
- * JWKS and attaches `request.user` (AuthTokenClaims). Use on every protected
- * route in every downstream service (product, seller, order, payment, ...).
- */
+export interface TenantContext {
+  sellerId: string;
+}
+
+export interface AuthenticatedRequest {
+  user: AuthTokenClaims;
+  tenant?: TenantContext;
+}
+
+export interface SellerAccessProvider {
+  resolve(
+    user: AuthTokenClaims,
+    capability: CapabilityName,
+    highRisk: boolean,
+  ): Promise<TenantContext | null>;
+}
+
+export class DenyingSellerAccessProvider implements SellerAccessProvider {
+  async resolve(): Promise<null> {
+    return null;
+  }
+}
+
+export interface CapabilityDecision {
+  allowed: boolean;
+  tenant?: TenantContext;
+  reason?: "EMAIL_NOT_VERIFIED";
+}
+
+export interface CapabilityResolver {
+  resolve(
+    user: AuthTokenClaims,
+    capability: CapabilityName,
+    highRisk: boolean,
+  ): Promise<CapabilityDecision>;
+}
+
+const buyerCapabilities = new Set<CapabilityName>([
+  "order:create",
+  "order:read-own",
+  "payment:create",
+]);
+
+export class DefaultCapabilityResolver implements CapabilityResolver {
+  constructor(
+    private readonly sellerAccess: SellerAccessProvider = new DenyingSellerAccessProvider(),
+  ) {}
+
+  async resolve(
+    user: AuthTokenClaims,
+    capability: CapabilityName,
+    highRisk: boolean,
+  ): Promise<CapabilityDecision> {
+    if (buyerCapabilities.has(capability)) {
+      return user.emailVerified
+        ? { allowed: true }
+        : { allowed: false, reason: "EMAIL_NOT_VERIFIED" };
+    }
+    if (capability === "admin:*") return { allowed: user.platformRole === "admin" };
+    const tenant = await this.sellerAccess.resolve(user, capability, highRisk);
+    return tenant ? { allowed: true, tenant } : { allowed: false };
+  }
+}
+
+function metadata<T>(context: ExecutionContext, key: string): T | undefined {
+  const handler = context.getHandler?.();
+  const controller = context.getClass?.();
+  return (
+    (handler && Reflect.getMetadata(key, handler)) ??
+    (controller && Reflect.getMetadata(key, controller))
+  );
+}
+
+/** Registered before CapabilityGuard for every Nest route. */
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
-  private readonly verifier: JwksVerifier;
-
-  constructor(verifier?: JwksVerifier) {
-    this.verifier = verifier ?? createJwksVerifierFromEnv();
-  }
+  constructor(private readonly verifier?: Pick<JwksVerifier, "verify">) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest();
-    const header: string | undefined = request.headers?.authorization;
-
+    const request = context
+      .switchToHttp()
+      .getRequest<AuthenticatedRequest & { headers?: { authorization?: string } }>();
+    const isPublic = metadata<boolean>(context, PUBLIC_KEY) === true;
+    if (metadata<boolean>(context, INTERNAL_KEY) === true) return true;
+    const header = request.headers?.authorization;
     if (!header?.startsWith("Bearer ")) {
-      throw new UnauthorizedException("Missing bearer token");
+      if (isPublic) return true;
+      throw new UnauthorizedException({ code: "UNAUTHENTICATED" });
     }
-
     try {
-      request.user = await this.verifier.verify(header.slice("Bearer ".length));
+      request.user = await (this.verifier ?? createJwksVerifierFromEnv()).verify(header.slice(7));
       return true;
     } catch (error) {
-      if (error instanceof errors.JWTExpired) {
+      if (isPublic) return true;
+      if (error instanceof errors.JWTExpired)
         throw new UnauthorizedException({ code: "TOKEN_EXPIRED" });
-      }
       throw new UnauthorizedException({ code: "UNAUTHENTICATED" });
     }
   }
 }
 
-/** Pairs with `@Roles(...)`. Register both as global/controller-level guards. */
+/** A route without @Public or @Capability is denied even with a valid JWT. */
 @Injectable()
-export class RolesGuard implements CanActivate {
-  canActivate(context: ExecutionContext): boolean {
-    const required: PlatformRole[] =
-      Reflect.getMetadata(ROLES_KEY, context.getHandler()) ??
-      Reflect.getMetadata(ROLES_KEY, context.getClass()) ??
-      [];
+export class CapabilityGuard implements CanActivate {
+  constructor(private readonly resolver: CapabilityResolver = new DefaultCapabilityResolver()) {}
 
-    if (required.length === 0) return true;
-
-    const { user } = context.switchToHttp().getRequest();
-    if (!user || !required.includes(user.platformRole)) {
-      throw new ForbiddenException(`Requires one of roles: ${required.join(", ")}`);
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    if (metadata<boolean>(context, INTERNAL_KEY) === true) return true;
+    if (metadata<boolean>(context, PUBLIC_KEY) === true) return true;
+    const capability = metadata<CapabilityName>(context, CAPABILITY_KEY);
+    if (!capability) throw new ForbiddenException({ code: "FORBIDDEN" });
+    const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
+    if (!request.user) throw new UnauthorizedException({ code: "UNAUTHENTICATED" });
+    if (buyerCapabilities.has(capability) && !request.user.emailVerified)
+      throw new ForbiddenException({ code: "EMAIL_NOT_VERIFIED" });
+    if (capability === "admin:*" && request.user.platformRole !== "admin")
+      throw new ForbiddenException({ code: "FORBIDDEN" });
+    let decision: CapabilityDecision;
+    try {
+      decision = await this.resolver.resolve(
+        request.user,
+        capability,
+        metadata<boolean>(context, HIGH_RISK_KEY) === true,
+      );
+    } catch {
+      throw new ForbiddenException({ code: "FORBIDDEN" });
     }
+    if (!decision.allowed) throw new ForbiddenException({ code: decision.reason ?? "FORBIDDEN" });
+    if (!buyerCapabilities.has(capability) && capability !== "admin:*" && !decision.tenant)
+      throw new ForbiddenException({ code: "FORBIDDEN" });
+    if (decision.tenant) request.tenant = decision.tenant;
     return true;
   }
-}
-
-/** Convenience: `@Auth("customer", "admin")` = JwtAuthGuard + RolesGuard + @Roles(...) in one decorator. */
-export function Auth(...roles: PlatformRole[]) {
-  return applyDecorators(UseGuards(JwtAuthGuard, RolesGuard), Roles(...roles));
 }

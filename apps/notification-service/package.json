@@ -13,6 +13,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@betterbasket/auth-shared": "workspace:*",
     "@betterbasket/contracts": "workspace:*",
     "@betterbasket/kafka-client": "workspace:*",
     "@betterbasket/logger": "workspace:*",
@@ -33,6 +34,7 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@betterbasket/test-utils": "workspace:*",
     "@betterbasket/config": "workspace:*",
     "@nestjs/cli": "^11.0.24",
     "@nestjs/testing": "^11.2.3",

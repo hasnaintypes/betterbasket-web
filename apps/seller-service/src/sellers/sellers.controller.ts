@@ -1,13 +1,9 @@
 import { Body, Controller, Get, Post, Query, Req } from "@nestjs/common";
 import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
-import { Auth } from "@betterbasket/auth-shared";
+import { Capability, HighRisk, type AuthenticatedRequest } from "@betterbasket/auth-shared";
 import { CreateSellerInputSchema, type CreateSellerInput } from "@betterbasket/contracts";
 import { ZodValidationPipe } from "@betterbasket/runtime";
 import { SellersService } from "./sellers.service";
-
-interface AuthedRequest {
-  user: { sub: string; activeOrganizationId?: string | null };
-}
 
 @ApiTags("sellers")
 @Controller("sellers")
@@ -15,39 +11,36 @@ export class SellersController {
   constructor(private readonly sellersService: SellersService) {}
 
   @Post("onboard")
-  @Auth("customer", "admin")
+  @Capability("seller:write")
   @ApiBearerAuth()
   onboard(
-    @Req() req: AuthedRequest,
+    @Req() req: AuthenticatedRequest,
     @Body(new ZodValidationPipe(CreateSellerInputSchema)) body: CreateSellerInput,
   ) {
-    if (!req.user.activeOrganizationId) {
+    if (!req.user.orgId) {
       throw new Error(
         "No active organization — create one via authClient.organization.create() first",
       );
     }
-    return this.sellersService.onboard(req.user.activeOrganizationId, body);
+    return this.sellersService.onboard(req.user.orgId, body);
   }
 
   @Get("me")
-  @Auth("customer", "admin")
+  @Capability("seller:read")
   @ApiBearerAuth()
-  me(@Req() req: AuthedRequest) {
-    return this.sellersService.findByOrganization(req.user.activeOrganizationId ?? "");
+  me(@Req() req: AuthenticatedRequest) {
+    return this.sellersService.findByOrganization(req.user.orgId ?? "");
   }
 
   @Post("me/onboarding-link")
-  @Auth("customer", "admin")
+  @Capability("stripe:manage")
+  @HighRisk()
   @ApiBearerAuth()
   onboardingLink(
-    @Req() req: AuthedRequest,
+    @Req() req: AuthenticatedRequest,
     @Query("returnUrl") returnUrl: string,
     @Query("refreshUrl") refreshUrl: string,
   ) {
-    return this.sellersService.createOnboardingLink(
-      req.user.activeOrganizationId ?? "",
-      returnUrl,
-      refreshUrl,
-    );
+    return this.sellersService.createOnboardingLink(req.user.orgId ?? "", returnUrl, refreshUrl);
   }
 }
