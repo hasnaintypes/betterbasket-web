@@ -149,6 +149,9 @@ importers:
       '@betterbasket/config':
         specifier: workspace:*
         version: link:../../packages/config
+      '@betterbasket/test-utils':
+        specifier: workspace:*
+        version: link:../../packages/test-utils
       '@nestjs/cli':
         specifier: ^11.0.24
         version: 11.0.24(@swc/core@1.16.21)(@types/node@22.20.1)(prettier@3.9.6)
@@ -452,6 +455,9 @@ importers:
       '@betterbasket/config':
         specifier: workspace:*
         version: link:../../packages/config
+      '@betterbasket/test-utils':
+        specifier: workspace:*
+        version: link:../../packages/test-utils
       '@nestjs/cli':
         specifier: ^11.0.24
         version: 11.0.24(@swc/core@1.16.21)(@types/node@22.20.1)(prettier@3.9.6)
@@ -494,6 +500,9 @@ importers:
 
   apps/notification-service:
     dependencies:
+      '@betterbasket/auth-shared':
+        specifier: workspace:*
+        version: link:../../packages/auth-shared
       '@betterbasket/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
@@ -552,6 +561,9 @@ importers:
       '@betterbasket/config':
         specifier: workspace:*
         version: link:../../packages/config
+      '@betterbasket/test-utils':
+        specifier: workspace:*
+        version: link:../../packages/test-utils
       '@nestjs/cli':
         specifier: ^11.0.24
         version: 11.0.24(@swc/core@1.16.21)(@types/node@22.20.1)(prettier@3.9.6)
@@ -658,6 +670,9 @@ importers:
       '@betterbasket/config':
         specifier: workspace:*
         version: link:../../packages/config
+      '@betterbasket/test-utils':
+        specifier: workspace:*
+        version: link:../../packages/test-utils
       '@nestjs/cli':
         specifier: ^11.0.24
         version: 11.0.24(@swc/core@1.16.21)(@types/node@22.20.1)(prettier@3.9.6)
@@ -770,6 +785,9 @@ importers:
       '@betterbasket/config':
         specifier: workspace:*
         version: link:../../packages/config
+      '@betterbasket/test-utils':
+        specifier: workspace:*
+        version: link:../../packages/test-utils
       '@nestjs/cli':
         specifier: ^11.0.24
         version: 11.0.24(@swc/core@1.16.21)(@types/node@22.20.1)(prettier@3.9.6)
@@ -882,6 +900,9 @@ importers:
       '@betterbasket/config':
         specifier: workspace:*
         version: link:../../packages/config
+      '@betterbasket/test-utils':
+        specifier: workspace:*
+        version: link:../../packages/test-utils
       '@nestjs/cli':
         specifier: ^11.0.24
         version: 11.0.24(@swc/core@1.16.21)(@types/node@22.20.1)(prettier@3.9.6)
@@ -1040,6 +1061,9 @@ importers:
       '@betterbasket/config':
         specifier: workspace:*
         version: link:../../packages/config
+      '@betterbasket/test-utils':
+        specifier: workspace:*
+        version: link:../../packages/test-utils
       '@nestjs/cli':
         specifier: ^11.0.24
         version: 11.0.24(@swc/core@1.16.21)(@types/node@22.20.1)(prettier@3.9.6)
@@ -1311,6 +1335,9 @@ importers:
 
   packages/runtime:
     dependencies:
+      '@betterbasket/auth-shared':
+        specifier: workspace:*
+        version: link:../auth-shared
       '@betterbasket/logger':
         specifier: workspace:*
         version: link:../logger
@@ -1372,6 +1399,9 @@ importers:
 
   packages/test-utils:
     dependencies:
+      '@betterbasket/auth-shared':
+        specifier: workspace:*
+        version: link:../auth-shared
       '@betterbasket/contracts':
         specifier: workspace:*
         version: link:../contracts
@@ -1387,13 +1417,13 @@ importers:
       jose:
         specifier: ^6.2.12
         version: 6.2.12
+      reflect-metadata:
+        specifier: ^0.2.2
+        version: 0.2.2
       supertest:
         specifier: ^7.0.0
         version: 7.2.2
     devDependencies:
-      '@betterbasket/auth-shared':
-        specifier: workspace:*
-        version: link:../auth-shared
       '@betterbasket/config':
         specifier: workspace:*
         version: link:../config

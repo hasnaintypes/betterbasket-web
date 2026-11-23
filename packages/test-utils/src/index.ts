@@ -4,5 +4,6 @@ export async function createJwtTestIssuer() {
   return issuer.createJwtTestIssuer();
 }
 export { createTestApp } from "./test-app.js";
+export { assertRoutesDeclared } from "./route-inspector.js";
 export { buildUser, buildSeller, buildProduct, buildOrder } from "./fixtures.js";
 export { createTestClock } from "./clock.js";

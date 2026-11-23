@@ -6,7 +6,27 @@ Downstream services set `AUTH_ISSUER` to the public API origin used by auth-serv
 
 # Internal service authentication
 
-Services use short lived HS256 tokens only for `/internal/*` routes. The gateway blocks those routes. User routes continue to use `@Auth()` and JWKS verified user tokens.
+Services use short lived HS256 tokens only for `/internal/*` routes. The gateway blocks those routes. User routes use global `JwtAuthGuard` and `CapabilityGuard` registered by `bootstrapService`.
+
+Every user-facing Nest HTTP handler must declare `@Public()` or one `@Capability("name")`. The JWT guard runs before the capability guard. Missing metadata is denied. A public handler accepts anonymous requests and attaches `request.user` when a valid bearer token is supplied. The global guards do not apply to raw Express routes registered directly by the bootstrap helper or gateway proxy; those routes retain their own protection.
+Routes under `/internal/*` use `@Internal()` instead; the internal token guard verifies those requests after the global user-token guards skip them.
+
+```ts
+@Get("catalog")
+@Public()
+listCatalog() {}
+
+@Post("orders")
+@Capability("order:create")
+createOrder(@Req() request: AuthenticatedRequest) {}
+
+@Post("products/:id/publish")
+@Capability("product:publish")
+@HighRisk()
+publish(@Req() request: AuthenticatedRequest) {}
+```
+
+`order:create`, `order:read-own`, and `payment:create` require a verified email for customers and admins. `admin:*` requires `platformRole: "admin"`. All seller capabilities are denied by the default `DenyingSellerAccessProvider` until the seller access service is implemented. A replacement `CapabilityResolver` can be supplied through `bootstrapService({ options: { capabilityResolver } })`; it should obtain seller access from a trusted service, fail closed on errors, and return a `sellerId` for `request.tenant`. `@HighRisk()` tells that provider to bypass any cache. No seller authorization is derived from JWT `orgId` alone.
 
 Set `INTERNAL_JWT_SECRETS` to a JSON object mapping each callee name to one or two `kid:secret` strings. Each secret must contain at least 32 UTF-8 bytes. Set `SERVICE_NAME` to the receiving service's name before constructing `InternalAuthGuard`. Missing or invalid configuration fails construction. Use a secret manager to inject these values; do not commit real secrets.
 
