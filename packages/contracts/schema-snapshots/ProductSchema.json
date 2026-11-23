@@ -9,18 +9,19 @@
           "type": "integer"
         },
         "currency": {
-          "default": "USD",
-          "maxLength": 3,
-          "minLength": 3,
+          "const": "USD",
           "type": "string"
         }
       },
       "required": [
-        "amount"
+        "amount",
+        "currency"
       ],
       "type": "object"
     },
     "category": {
+      "maxLength": 100,
+      "minLength": 1,
       "type": "string"
     },
     "createdAt": {
@@ -39,17 +40,27 @@
       "default": [],
       "items": {
         "format": "uri",
+        "maxLength": 2048,
         "type": "string"
       },
+      "maxItems": 12,
       "type": "array"
-    },
-    "organizationId": {
-      "type": "string"
     },
     "sellerId": {
       "type": "string"
     },
+    "sellerStatus": {
+      "default": "other",
+      "enum": [
+        "active",
+        "other",
+        "suspended"
+      ],
+      "type": "string"
+    },
     "slug": {
+      "maxLength": 220,
+      "minLength": 2,
       "type": "string"
     },
     "status": {
@@ -57,7 +68,8 @@
       "enum": [
         "active",
         "archived",
-        "draft"
+        "draft",
+        "unpublished"
       ],
       "type": "string"
     },
@@ -74,15 +86,16 @@
       "default": [],
       "items": {
         "properties": {
-          "id": {
-            "type": "string"
-          },
           "options": {
             "additionalProperties": {
+              "maxLength": 100,
+              "minLength": 1,
               "type": "string"
             },
             "default": {},
             "propertyNames": {
+              "maxLength": 40,
+              "minLength": 1,
               "type": "string"
             },
             "type": "object"
@@ -95,35 +108,48 @@
                 "type": "integer"
               },
               "currency": {
-                "default": "USD",
-                "maxLength": 3,
-                "minLength": 3,
+                "const": "USD",
                 "type": "string"
               }
             },
             "required": [
-              "amount"
+              "amount",
+              "currency"
             ],
             "type": "object"
           },
           "sku": {
+            "maxLength": 64,
+            "minLength": 1,
             "type": "string"
           },
           "stock": {
             "maximum": 9007199254740991,
             "minimum": 0,
             "type": "integer"
+          },
+          "variantId": {
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "type": "string"
           }
         },
         "required": [
-          "id",
           "price",
           "sku",
-          "stock"
+          "stock",
+          "variantId"
         ],
         "type": "object"
       },
+      "maxItems": 100,
       "type": "array"
+    },
+    "version": {
+      "default": 0,
+      "maximum": 9007199254740991,
+      "minimum": 0,
+      "type": "integer"
     }
   },
   "required": [
@@ -131,7 +157,6 @@
     "category",
     "createdAt",
     "id",
-    "organizationId",
     "sellerId",
     "slug",
     "title",

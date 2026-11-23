@@ -8,8 +8,10 @@
     "dev": "nest start --watch",
     "start": "node dist/main.js",
     "lint": "eslint . --max-warnings=0",
-    "type-check": "tsc --noEmit",
+    "type-check": "tsc --noEmit && tsc -p tsconfig.migrations.json --noEmit",
     "test": "jest",
+    "test:integration": "node --test test/*.integration.mjs",
+    "db:migrate:v2": "ts-node --transpile-only migrations/001-v2.ts",
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {

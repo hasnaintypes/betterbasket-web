@@ -1,15 +1,16 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
-    "id": {
-      "type": "string"
-    },
     "options": {
       "additionalProperties": {
+        "maxLength": 100,
+        "minLength": 1,
         "type": "string"
       },
       "default": {},
       "propertyNames": {
+        "maxLength": 40,
+        "minLength": 1,
         "type": "string"
       },
       "type": "object"
@@ -22,31 +23,37 @@
           "type": "integer"
         },
         "currency": {
-          "default": "USD",
-          "maxLength": 3,
-          "minLength": 3,
+          "const": "USD",
           "type": "string"
         }
       },
       "required": [
-        "amount"
+        "amount",
+        "currency"
       ],
       "type": "object"
     },
     "sku": {
+      "maxLength": 64,
+      "minLength": 1,
       "type": "string"
     },
     "stock": {
       "maximum": 9007199254740991,
       "minimum": 0,
       "type": "integer"
+    },
+    "variantId": {
+      "format": "uuid",
+      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+      "type": "string"
     }
   },
   "required": [
-    "id",
     "price",
     "sku",
-    "stock"
+    "stock",
+    "variantId"
   ],
   "type": "object"
 }

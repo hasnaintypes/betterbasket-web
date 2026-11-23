@@ -29,8 +29,7 @@ export function buildSeller(overrides: Partial<Seller> = {}): Seller {
 export function buildProduct(overrides: Partial<Product> = {}): Product {
   return {
     id: "product-1",
-    sellerId: "seller-1",
-    organizationId: "org-1",
+    sellerId: "00000000-0000-4000-8000-000000000001",
     title: "Test Product",
     slug: "test-product",
     description: "",
@@ -39,6 +38,8 @@ export function buildProduct(overrides: Partial<Product> = {}): Product {
     basePrice: { ...money },
     variants: [],
     status: "active",
+    sellerStatus: "active",
+    version: 0,
     createdAt: new Date(date),
     updatedAt: new Date(date),
     ...overrides,
