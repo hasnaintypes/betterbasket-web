@@ -1,5 +1,6 @@
-import { Module } from "@nestjs/common";
+import { Controller, Module, Post } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
+import { Capability, CapabilityGuard, JwtAuthGuard } from "@betterbasket/auth-shared";
 import { createStubUpstream } from "@betterbasket/test-utils";
 import { createServer } from "node:http";
 import { once } from "node:events";
@@ -11,6 +12,18 @@ import { routes } from "./routes";
 
 @Module({})
 class EmptyModule {}
+
+@Controller("orders")
+class GuardedOrderController {
+  @Post()
+  @Capability("order:create")
+  create() {
+    return { created: true };
+  }
+}
+
+@Module({ controllers: [GuardedOrderController] })
+class GuardedOrderModule {}
 
 async function fixture(targets: Partial<GatewayConfig> = {}) {
   const stub = await createStubUpstream();
@@ -32,6 +45,48 @@ async function fixture(targets: Partial<GatewayConfig> = {}) {
 }
 
 describe("gateway HTTP route table", () => {
+  it("passes authorization outcomes from a guarded downstream order route", async () => {
+    const downstream = await NestFactory.create(GuardedOrderModule, { logger: false });
+    downstream.useGlobalGuards(
+      new JwtAuthGuard({
+        verify: async (token) => ({
+          sub: "buyer-1",
+          email: "buyer@example.test",
+          emailVerified: token === "verified",
+          platformRole: "customer",
+          orgId: null,
+          orgRole: null,
+          iss: "https://example.test",
+          aud: "https://example.test",
+          iat: 1,
+          exp: 9999999999,
+          jti: "test-token",
+        }),
+      }),
+      new CapabilityGuard(),
+    );
+    await downstream.listen(0, "127.0.0.1");
+    const address = downstream.getHttpServer().address();
+    if (!address || typeof address === "string") throw new Error("No downstream port");
+    const gateway = await fixture({ ORDER_SERVICE_URL: `http://127.0.0.1:${address.port}` });
+    try {
+      expect((await gateway.client.post("/api/orders")).status).toBe(401);
+      const unverified = await gateway.client
+        .post("/api/orders")
+        .set("Authorization", "Bearer unverified");
+      expect(unverified.status).toBe(403);
+      expect(unverified.body.code).toBe("EMAIL_NOT_VERIFIED");
+      const verified = await gateway.client
+        .post("/api/orders")
+        .set("Authorization", "Bearer verified");
+      expect(verified.status).toBe(201);
+      expect(verified.body).toEqual({ created: true });
+    } finally {
+      await gateway.close();
+      await downstream.close();
+    }
+  });
+
   for (const route of routes) {
     it(`${route.prefix} rewrites path and preserves request data`, async () => {
       const { stub, client, close } = await fixture();

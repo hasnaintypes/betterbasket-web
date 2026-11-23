@@ -38,6 +38,7 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@betterbasket/test-utils": "workspace:*",
     "@betterbasket/config": "workspace:*",
     "@nestjs/cli": "^11.0.24",
     "@nestjs/testing": "^11.2.3",

@@ -8,6 +8,7 @@ import {
   Req,
 } from "@nestjs/common";
 import { ApiExcludeController } from "@nestjs/swagger";
+import { Public } from "@betterbasket/auth-shared";
 import type { Request } from "express";
 import { StripeWebhookInbox } from "./webhook.inbox";
 import type { StripeWebhookScope } from "./stripe.provider";
@@ -24,6 +25,7 @@ export class WebhookController {
   constructor(private readonly inbox: StripeWebhookInbox) {}
 
   @Post("account")
+  @Public()
   @HttpCode(200)
   handleAccount(
     @Req() req: Request & { rawBody?: Buffer },
@@ -33,6 +35,7 @@ export class WebhookController {
   }
 
   @Post("connect")
+  @Public()
   @HttpCode(200)
   handleConnect(
     @Req() req: Request & { rawBody?: Buffer },

@@ -1,6 +1,6 @@
 import { Controller, Post } from "@nestjs/common";
 import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
-import { Auth } from "@betterbasket/auth-shared";
+import { Capability } from "@betterbasket/auth-shared";
 import { PaymentsService } from "./payments.service";
 
 @ApiTags("payments")
@@ -9,7 +9,7 @@ export class PaymentsController {
   constructor(private readonly paymentsService: PaymentsService) {}
 
   @Post("intents")
-  @Auth("customer")
+  @Capability("payment:create")
   @ApiBearerAuth()
   createIntent() {
     return this.paymentsService.createPaymentIntent();
