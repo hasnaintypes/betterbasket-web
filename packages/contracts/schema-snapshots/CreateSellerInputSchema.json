@@ -1,6 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
   "properties": {
+    "country": {
+      "pattern": "^[A-Z]{2}$",
+      "type": "string"
+    },
     "description": {
       "anyOf": [
         {
@@ -21,11 +26,18 @@
       "maxLength": 100,
       "minLength": 2,
       "type": "string"
+    },
+    "supportEmail": {
+      "format": "email",
+      "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$",
+      "type": "string"
     }
   },
   "required": [
+    "country",
     "slug",
-    "storeName"
+    "storeName",
+    "supportEmail"
   ],
   "type": "object"
 }

@@ -41,6 +41,7 @@ export const CapabilitySchema = z.enum([
   "order:fulfil",
   "order:cancel",
   "seller:read",
+  "seller:register",
   "seller:write",
   "stripe:manage",
   "payout:read",
