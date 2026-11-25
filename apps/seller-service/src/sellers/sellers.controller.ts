@@ -2,10 +2,10 @@ import {
   BadRequestException,
   Body,
   Controller,
+  ForbiddenException,
   Get,
   HttpCode,
   Post,
-  Query,
   Req,
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiBody, ApiOkResponse, ApiTags } from "@nestjs/swagger";
@@ -72,14 +72,29 @@ export class SellersController {
   }
 
   @Post("me/onboarding-link")
+  @HttpCode(200)
+  // TODO(#49/#54): Wire the live seller-access provider before activating stripe:manage.
   @Capability("stripe:manage")
   @HighRisk()
   @ApiBearerAuth()
-  onboardingLink(
-    @Req() req: AuthenticatedRequest,
-    @Query("returnUrl") returnUrl: string,
-    @Query("refreshUrl") refreshUrl: string,
-  ) {
-    return this.sellersService.createOnboardingLink(req.user.orgId ?? "", returnUrl, refreshUrl);
+  onboardingLink(@Req() req: AuthenticatedRequest) {
+    this.requireOwner(req);
+    return this.sellersService.createOnboardingLink(req.user.orgId!);
+  }
+
+  @Post("me/stripe-account")
+  @HttpCode(200)
+  @Capability("stripe:manage")
+  @HighRisk()
+  @ApiBearerAuth()
+  createStripeAccount(@Req() req: AuthenticatedRequest) {
+    this.requireOwner(req);
+    return this.sellersService.createStripeAccount(req.user.orgId!, req.user.sub);
+  }
+
+  private requireOwner(req: AuthenticatedRequest) {
+    if (!req.user.emailVerified || !req.user.orgId || req.user.orgRole !== "owner") {
+      throw new ForbiddenException({ code: "FORBIDDEN" });
+    }
   }
 }

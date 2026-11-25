@@ -38,6 +38,23 @@ ID comes only from the verified token. The route returns HTTP 200 with
 existing seller, including after simultaneous submits. A new seller starts in
 `pending`. This route does not create a Stripe account.
 
+## Stripe test-mode onboarding
+
+`POST /sellers/me/stripe-account` creates an Express dashboard account with
+platform-paid fees and losses, Stripe-collected requirements, and only the
+`transfers` capability requested. Stripe receives `acct:<sellerId>` as the
+idempotency key. The seller moves from `pending` to `stripe_pending` with a
+status-history row and `seller.onboarded.v1` outbox event in one transaction.
+Retrying after a database failure reuses the same Stripe account. The service
+rejects live Stripe keys at startup.
+
+`POST /sellers/me/onboarding-link` takes no redirect URLs. The service builds
+return and refresh URLs from the first origin in
+`ALLOWED_FRONTEND_ORIGINS`, whose entries must be comma-separated URL origins.
+Both endpoints carry the high-risk capability marker. Their activation requires
+the live seller-access provider described in #49/#54. Until it exists, the
+current deny-by-default provider returns 403.
+
 Set `SUPPORTED_SELLER_COUNTRIES` to a comma-separated list of allowed country
 codes. An empty value disables new registrations outside `NODE_ENV=test`.
 Email must be verified; a non-owner gets 403, and a verified user without an
