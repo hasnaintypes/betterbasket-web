@@ -24,5 +24,5 @@ name, password change, session list and revocation, and sign-out.
 The auth client uses `NEXT_PUBLIC_API_URL` for Better Auth's `/api/auth/*`
 routes through the gateway. Account actions require that public origin to be
 configured. Form inputs use strict shared Zod schemas. The email-verification
-result page checks the resulting session and offers sign-in if none exists;
-whether verification should create that session is the open #26 scope decision.
+result page refreshes the session created by verification and links to the
+account. If the session is unavailable, it offers a sign-in link.

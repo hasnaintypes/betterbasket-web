@@ -107,7 +107,35 @@ test(
         body: JSON.stringify({ email, password: "valid-password-12345" }),
       });
       assert.equal(unverifiedSignIn.status, 403);
-      await db.query('UPDATE "user" SET email_verified = true WHERE id = $1', [user.id]);
+      const verifyToken = await new SignJWT({ email })
+        .setProtectedHeader({ alg: "HS256" })
+        .setExpirationTime("1h")
+        .sign(new TextEncoder().encode(authSecret));
+      const verified = await fetch(
+        `${base}/api/auth/verify-email?token=${encodeURIComponent(verifyToken)}&callbackURL=${encodeURIComponent(base)}`,
+        { redirect: "manual", headers: { "x-forwarded-for": "203.0.113.7" } },
+      );
+      assert.equal(verified.status, 302);
+      const verificationSessionCookie = verified.headers
+        .getSetCookie()
+        .find((value) => value.includes("session_token="));
+      assert.ok(verificationSessionCookie, "Verification must sign the buyer in");
+      assert.match(verificationSessionCookie, /; Secure/i);
+      assert.match(verificationSessionCookie, /; HttpOnly/i);
+      assert.match(verificationSessionCookie, /; SameSite=Lax/i);
+      const verifiedSession = await fetch(`${base}/api/auth/get-session`, {
+        headers: { cookie: verificationSessionCookie.split(";")[0] },
+      });
+      assert.equal(verifiedSession.status, 200);
+      const verifiedUser = (await verifiedSession.json()).user;
+      assert.equal(verifiedUser.id, user.id);
+      assert.equal(verifiedUser.email, email);
+      assert.equal(verifiedUser.emailVerified, true);
+      assert.equal(
+        (await db.query('SELECT email_verified FROM "user" WHERE id = $1', [user.id])).rows[0]
+          .email_verified,
+        true,
+      );
       const signin = await fetch(`${base}/api/auth/sign-in/email`, {
         method: "POST",
         headers: { "content-type": "application/json", origin: base },
@@ -161,8 +189,10 @@ test(
         assert.deepEqual(row.details, { method: "email" });
       }
 
-      const getToken = async () => {
-        const response = await fetch(`${base}/api/auth/token`, { headers: { cookie } });
+      const getToken = async (sessionCookie = cookie) => {
+        const response = await fetch(`${base}/api/auth/token`, {
+          headers: { cookie: sessionCookie },
+        });
         assert.equal(response.status, 200, `Token returned ${response.status}`);
         return (await response.json()).token;
       };
@@ -177,6 +207,13 @@ test(
           audience: base,
           algorithms: ["EdDSA"],
         });
+
+      const verificationClaims = (
+        await verify(await getToken(verificationSessionCookie.split(";")[0]))
+      ).payload;
+      assert.equal(verificationClaims.sub, user.id);
+      assert.equal(verificationClaims.email, email);
+      assert.equal(verificationClaims.emailVerified, true);
 
       const noOrgToken = await getToken();
       const noOrg = (await verify(noOrgToken)).payload;
@@ -278,21 +315,6 @@ test(
         "jwks.key_rotated",
       ]);
       assert.ok(keyAudit.rows.every((row) => Object.keys(row.details).length === 0));
-
-      const verifyToken = await new SignJWT({ email })
-        .setProtectedHeader({ alg: "HS256" })
-        .setExpirationTime("1h")
-        .sign(new TextEncoder().encode(authSecret));
-      const verified = await fetch(
-        `${base}/api/auth/verify-email?token=${encodeURIComponent(verifyToken)}&callbackURL=${encodeURIComponent(base)}`,
-        { redirect: "manual", headers: { "x-forwarded-for": "203.0.113.7" } },
-      );
-      assert.equal(verified.status, 302);
-      assert.equal(
-        (await db.query('SELECT email_verified FROM "user" WHERE id = $1', [user.id])).rows[0]
-          .email_verified,
-        true,
-      );
 
       const changed = await fetch(`${base}/api/auth/change-password`, {
         method: "POST",

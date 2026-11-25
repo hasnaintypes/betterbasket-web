@@ -100,6 +100,7 @@ export async function createAuth(emailSender?: EmailSender) {
     },
     emailVerification: {
       sendOnSignUp: true,
+      autoSignInAfterVerification: true,
       expiresIn: 60 * 60,
       sendVerificationEmail: async ({ user, token, url }) => {
         email.enqueue("verification", user.email, token, url);

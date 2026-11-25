@@ -30,7 +30,8 @@ and key rotation.
 ## Verification and password reset email
 
 New accounts must verify their email before password sign-in. Verification and
-password reset links expire after one hour. Better Auth sends through a small
+password reset links expire after one hour. Following a valid verification link
+creates a browser session for that account. Better Auth sends through a small
 `EmailSender` interface: local development uses a console sender that logs
 only that delivery was suppressed; setting `RESEND_API_KEY` selects Resend.
 Resend delivery requires a verified sender in `EMAIL_FROM`.
