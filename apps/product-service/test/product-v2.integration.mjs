@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import mongoose from "mongoose";
 
+// TODO(#62): Run with a nonproduction Mongo URL that can create and drop a test database; record SKU and index evidence on the issue.
 const uri = process.env.PRODUCT_TEST_MONGODB_URI;
 if (!uri) throw new Error("PRODUCT_TEST_MONGODB_URI is required for integration tests");
 const database = `ci_${randomUUID().replaceAll("-", "")}`;

@@ -16,7 +16,7 @@ const input = {
 };
 
 describe("SellersService.onboard", () => {
-  const service = new SellersService();
+  const service = new SellersService({} as never);
   const originalEnv = process.env.NODE_ENV;
 
   beforeEach(() => {

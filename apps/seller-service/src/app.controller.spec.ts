@@ -15,6 +15,7 @@ const validEnv = {
   AUTH_JWKS_URL: "http://127.0.0.1:4001/api/auth/jwks",
   DATABASE_URL: "postgresql://user:password@db.example.test/db",
   STRIPE_SECRET_KEY: "sk_test_aaaaaaaaaaaaaaaaaaaa",
+  ALLOWED_FRONTEND_ORIGINS: "https://seller.example.test",
   KAFKA_BROKERS: "broker.example.test:9092",
   KAFKA_USERNAME: "user",
   KAFKA_PASSWORD: "password",
@@ -68,6 +69,13 @@ describe("seller-service bootstrap", () => {
     expect(sellerEnvSchema.safeParse({ ...validEnv, STRIPE_SECRET_KEY: undefined }).success).toBe(
       false,
     );
+  });
+
+  it("refuses a live Stripe key even when other configuration is valid", () => {
+    expect(
+      sellerEnvSchema.safeParse({ ...validEnv, STRIPE_SECRET_KEY: "sk_live_aaaaaaaaaaaaaaaaaaaa" })
+        .success,
+    ).toBe(false);
   });
 
   it("exits within ten seconds of SIGTERM", async () => {
