@@ -13,6 +13,15 @@ Configure `STRIPE_ACCOUNT_WEBHOOK_SECRET` and
 while false. Keep all testing and development on Stripe test keys. No Stripe
 network calls are needed for the signed-fixture tests.
 
+`PAYMENTS_ENABLED` defaults to `true` in test mode and `false` otherwise. Set it to `false` in both
+payment-service and order-service deployment configuration to return HTTP 503
+`PAYMENTS_DISABLED` for payment-intent and order creation while leaving reads,
+health endpoints, and catalog browsing available. The current creation routes
+otherwise remain 501 stubs pending #98 and order implementation. Both services
+validate this flag at boot. Payment-service logs `payments: TEST MODE` or
+`payments: LIVE MODE` at startup without logging keys. The live-payments gate
+remains closed; do not set `PAYMENTS_LIVE_MODE_ENABLED=true` or use live keys.
+
 The first service-owned migration creates `stripe_events`, `outbox`, and
 `processed_events`. The next migration replaces any prototype `payments` and
 `payout_ledger` tables with one platform payment per order, immutable
