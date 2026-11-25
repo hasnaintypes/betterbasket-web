@@ -7,6 +7,11 @@ local development). The browser session is checked through the gateway; API
 tokens stay in memory. The shell shows a retry action if the gateway is
 unavailable.
 
+The build checks `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` before and during Next.js configuration loading.
+With `PAYMENTS_LIVE_MODE_ENABLED=false` (the default), a `pk_live_` key fails
+the build. Keep the publishable key in test mode until the live-payments gate
+is explicitly opened.
+
 The CSP permits ImageKit images and Stripe scripts, frames, and API calls.
 Scripts require a per-request nonce. Tailwind currently needs
 `style-src 'unsafe-inline'`; this exception applies to styles only.

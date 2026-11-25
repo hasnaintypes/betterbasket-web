@@ -78,6 +78,16 @@ describe("seller-service bootstrap", () => {
     ).toBe(false);
   });
 
+  it("permits a live key only when the live-mode flag is explicitly true", () => {
+    expect(
+      sellerEnvSchema.safeParse({
+        ...validEnv,
+        STRIPE_SECRET_KEY: "sk_live_aaaaaaaaaaaaaaaaaaaa",
+        PAYMENTS_LIVE_MODE_ENABLED: "true",
+      }).success,
+    ).toBe(true);
+  });
+
   it("exits within ten seconds of SIGTERM", async () => {
     const script = `const { Module } = require("@nestjs/common");
       class ProbeModule {}

@@ -46,7 +46,8 @@ platform-paid fees and losses, Stripe-collected requirements, and only the
 idempotency key. The seller moves from `pending` to `stripe_pending` with a
 status-history row and `seller.onboarded.v1` outbox event in one transaction.
 Retrying after a database failure reuses the same Stripe account. The service
-rejects live Stripe keys at startup.
+rejects live Stripe keys at startup unless `PAYMENTS_LIVE_MODE_ENABLED=true`.
+The live-payments gate remains closed; keep this flag false and use test keys.
 
 `POST /sellers/me/onboarding-link` takes no redirect URLs. The service builds
 return and refresh URLs from the first origin in
