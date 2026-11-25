@@ -6,6 +6,7 @@ import { Pool } from "pg";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 
+// TODO(#47): Run with a verified nonproduction Neon URL that can create and drop schemas; record the concurrency result on the issue.
 const url = process.env.SELLER_TEST_DATABASE_URL;
 if (!url) throw new Error("SELLER_TEST_DATABASE_URL is required for integration tests");
 const schema = `seller_onboard_${randomUUID().replaceAll("-", "")}`;
@@ -30,7 +31,7 @@ before(async () => {
   pool = new Pool({ connectionString: process.env.DATABASE_URL });
   await migrate(drizzle(pool), { migrationsFolder, migrationsSchema: schema });
   const { SellersService } = await import("../dist/sellers/sellers.service.js");
-  service = new SellersService();
+  service = new SellersService({});
 });
 
 after(async () => {
