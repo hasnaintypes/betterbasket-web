@@ -8,7 +8,10 @@ import { Button } from "../components/button";
 type ApiClient = ReturnType<typeof createApiClient>;
 type SessionState =
   | { status: "loading" | "anonymous" | "unavailable"; user: null }
-  | { status: "authenticated"; user: { id: string; email: string } };
+  | {
+      status: "authenticated";
+      user: { id: string; email: string; name: string; emailVerified: boolean };
+    };
 
 const SessionContext = React.createContext<{
   api: ApiClient | null;
@@ -44,7 +47,15 @@ export function AppProviders({ children, apiUrl }: { children: React.ReactNode; 
           typeof user.id === "string" &&
           typeof user.email === "string"
         ) {
-          setSession({ status: "authenticated", user: { id: user.id, email: user.email } });
+          setSession({
+            status: "authenticated",
+            user: {
+              id: user.id,
+              email: user.email,
+              name: "name" in user && typeof user.name === "string" ? user.name : "",
+              emailVerified: "emailVerified" in user && user.emailVerified === true,
+            },
+          });
         } else {
           setSession({ status: "anonymous", user: null });
         }

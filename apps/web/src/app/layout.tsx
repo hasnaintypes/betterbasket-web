@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { AppProviders } from "@betterbasket/ui/providers/app-providers";
+import { VerificationBanner } from "@/components/verification-banner";
 import "./globals.css";
 
 export const dynamic = "force-dynamic";
@@ -13,7 +14,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body className="bg-background text-foreground antialiased">
-        <AppProviders apiUrl={process.env.NEXT_PUBLIC_API_URL}>{children}</AppProviders>
+        <AppProviders apiUrl={process.env.NEXT_PUBLIC_API_URL}>
+          <VerificationBanner />
+          {children}
+        </AppProviders>
       </body>
     </html>
   );

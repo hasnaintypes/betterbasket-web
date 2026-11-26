@@ -104,33 +104,82 @@ try {
         const client = cdp(socket);
         await client.send("Runtime.enable");
         await client.send("Page.enable");
-        await client.send("Page.navigate", { url: base });
-        const until = Date.now() + 20_000;
-        let loaded = false;
-        while (Date.now() < until) {
-          const state = await client.send("Runtime.evaluate", {
-            expression: "({ href: location.href, ready: document.readyState })",
+        const routes =
+          app === "web"
+            ? [
+                "/",
+                "/sign-up",
+                "/sign-in",
+                "/verify-email",
+                "/email-verified",
+                "/forgot-password",
+                "/reset-password",
+                "/account",
+              ]
+            : ["/"];
+        for (const route of routes) {
+          await client.send("Page.navigate", { url: `${base}${route}` });
+          const until = Date.now() + 20_000;
+          let loaded = false;
+          while (Date.now() < until) {
+            const state = await client.send("Runtime.evaluate", {
+              expression: "({ href: location.href, ready: document.readyState })",
+              returnByValue: true,
+            });
+            if (
+              state.result.value.href === `${base}${route}` &&
+              state.result.value.ready === "complete"
+            ) {
+              loaded = true;
+              break;
+            }
+            await new Promise((resolve) => setTimeout(resolve, 100));
+          }
+          assert.ok(loaded, `${app}${route}: page did not finish loading`);
+          const injected = await client.send("Runtime.evaluate", { expression: axeSource });
+          assert.equal(
+            injected.exceptionDetails,
+            undefined,
+            `${app}${route}: axe injection failed`,
+          );
+          const result = await client.send("Runtime.evaluate", {
+            expression:
+              "axe.run(document).then(({violations}) => violations.filter(v => ['serious','critical'].includes(v.impact)).map(v => ({id:v.id, impact:v.impact, nodes:v.nodes.map(n => n.target)})))",
+            awaitPromise: true,
             returnByValue: true,
           });
-          if (state.result.value.href.startsWith(base) && state.result.value.ready === "complete") {
-            loaded = true;
-            break;
+          assert.equal(result.exceptionDetails, undefined, `${app}${route}: axe execution failed`);
+          assert.deepEqual(result.result.value, [], `${app}${route}: serious axe violations`);
+          console.log(`${app}${route}: zero serious or critical axe violations`);
+          if (
+            app === "web" &&
+            ["/sign-up", "/sign-in", "/forgot-password", "/verify-email"].includes(route)
+          ) {
+            const validation = await client.send("Runtime.evaluate", {
+              expression: `new Promise(resolve => {
+                document.querySelector('button[type="submit"]').click();
+                setTimeout(() => resolve({
+                  invalidEmail: !!document.querySelector('#email-error'),
+                  submitted: !!document.querySelector('button[type="submit"]:disabled')
+                }), 100);
+              })`,
+              awaitPromise: true,
+              returnByValue: true,
+            });
+            assert.equal(
+              validation.exceptionDetails,
+              undefined,
+              `${app}${route}: form validation failed`,
+            );
+            assert.deepEqual(
+              validation.result.value,
+              { invalidEmail: true, submitted: false },
+              `${app}${route}: invalid form state`,
+            );
+            console.log(`${app}${route}: empty form shows field error without submitting`);
           }
-          await new Promise((resolve) => setTimeout(resolve, 100));
         }
-        assert.ok(loaded, `${app}: page did not finish loading`);
-        const injected = await client.send("Runtime.evaluate", { expression: axeSource });
-        assert.equal(injected.exceptionDetails, undefined, `${app}: axe injection failed`);
-        const result = await client.send("Runtime.evaluate", {
-          expression:
-            "axe.run(document).then(({violations}) => violations.filter(v => ['serious','critical'].includes(v.impact)).map(v => ({id:v.id, impact:v.impact, nodes:v.nodes.map(n => n.target)})))",
-          awaitPromise: true,
-          returnByValue: true,
-        });
-        assert.equal(result.exceptionDetails, undefined, `${app}: axe execution failed`);
-        assert.deepEqual(result.result.value, [], `${app}: serious axe violations`);
         assert.deepEqual(client.hydrationErrors, [], `${app}: hydration errors`);
-        console.log(`${app}: zero serious or critical axe violations; no hydration errors`);
       } finally {
         socket.close();
       }

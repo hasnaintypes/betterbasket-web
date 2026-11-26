@@ -1115,6 +1115,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@betterbasket/auth-shared':
+        specifier: workspace:*
+        version: link:../../packages/auth-shared
       '@betterbasket/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
