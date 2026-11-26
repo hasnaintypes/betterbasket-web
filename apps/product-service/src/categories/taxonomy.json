@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "categories": [
+    {
+      "id": "fashion",
+      "name": "Fashion",
+      "children": [
+        { "id": "clothing", "name": "Clothing" },
+        { "id": "shoes", "name": "Shoes" },
+        { "id": "accessories", "name": "Accessories" }
+      ]
+    },
+    {
+      "id": "home",
+      "name": "Home",
+      "children": [
+        { "id": "furniture", "name": "Furniture" },
+        { "id": "kitchen", "name": "Kitchen" },
+        { "id": "decor", "name": "Decor" }
+      ]
+    },
+    {
+      "id": "electronics",
+      "name": "Electronics",
+      "children": [
+        { "id": "computers", "name": "Computers" },
+        { "id": "phones", "name": "Phones" },
+        { "id": "audio", "name": "Audio" }
+      ]
+    }
+  ]
+}

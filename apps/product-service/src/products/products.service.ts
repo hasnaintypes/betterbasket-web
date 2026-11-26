@@ -5,6 +5,7 @@ import { randomUUID } from "node:crypto";
 import type { CreateProductInput, PaginationQuery } from "@betterbasket/contracts";
 import { ProductDocument, type ProductMongoDocument } from "./schemas/product.schema";
 import { isSellerSkuDuplicate, isSlugDuplicate, productSlug } from "./slug";
+import { assertKnownCategory } from "../categories/catalog";
 
 @Injectable()
 export class ProductsService {
@@ -13,6 +14,7 @@ export class ProductsService {
   ) {}
 
   async create(sellerId: string, input: CreateProductInput) {
+    assertKnownCategory(input.category);
     const variants = input.variants.map((variant) => ({ ...variant, variantId: randomUUID() }));
     for (let attempt = 0; attempt < 5; attempt++) {
       try {

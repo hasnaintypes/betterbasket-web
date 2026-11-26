@@ -5,5 +5,5 @@
     "outDir": "./dist-migrations",
     "noEmit": true
   },
-  "include": ["src/**/*", "migrations/**/*.ts"]
+  "include": ["src/**/*", "migrations/**/*.ts", "scripts/**/*.ts"]
 }
