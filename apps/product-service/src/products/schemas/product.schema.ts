@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import type { HydratedDocument } from "mongoose";
 import type { ProductSellerStatus, ProductStatus } from "@betterbasket/contracts";
+import { categoryIds } from "../../categories/catalog";
 
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const plainText = (value: string) => !/<\/?[a-z][^>]*>/i.test(value);
@@ -69,7 +70,7 @@ export class ProductDocument {
   })
   images!: string[];
 
-  @Prop({ required: true, minlength: 1, maxlength: 100 })
+  @Prop({ required: true, enum: categoryIds })
   category!: string;
 
   @Prop({ type: moneySchema, required: true })

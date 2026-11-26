@@ -1,5 +1,22 @@
 # Product service data model
 
+## Categories and synthetic data
+
+`GET /categories` is public and returns version 1 of the two-level taxonomy in
+`src/categories/taxonomy.json`. Products store a leaf category id. Product
+creation and schema validation reject ids outside this taxonomy; future
+publish commands must use the same `assertKnownCategory` check.
+
+For a nonproduction MongoDB database, set `NODE_ENV=development` or `staging`
+and `MONGODB_URI`, then run
+`pnpm --filter product-service db:seed:synthetic 20 3` for 20 synthetic
+products across three synthetic sellers. The first argument is the product
+count and the second is the seller count. The command refuses every other
+environment, including production. Products use placeholder images and start
+as drafts. Their stable slugs and seller/variant ids make repeat runs
+idempotent; existing products are never overwritten. Use only an approved
+nonproduction database.
+
 Products belong to a seller record (`sellerId` UUID), not an auth-service
 organization or user. The Mongoose schema stores stable UUID `variantId` values,
 integer USD prices, nonnegative stock, `draft|active|unpublished|archived`

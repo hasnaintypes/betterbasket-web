@@ -12,6 +12,7 @@
     "test": "jest",
     "test:integration": "node --test test/*.integration.mjs",
     "db:migrate:v2": "ts-node --transpile-only migrations/001-v2.ts",
+    "db:seed:synthetic": "ts-node --project tsconfig.migrations.json scripts/seed-products.ts",
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
