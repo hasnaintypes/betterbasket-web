@@ -1,16 +1,15 @@
 import { z } from "zod";
 import { port, secret, url } from "@betterbasket/runtime";
 
-export const sellerEnvSchema = z.object({
+const baseSellerEnvSchema = z.object({
   NODE_ENV: z.enum(["development", "production", "test"]),
   PORT: port(),
   AUTH_ISSUER: url(),
   AUTH_AUDIENCE: url().optional(),
   AUTH_JWKS_URL: url(),
   DATABASE_URL: z.string().min(1),
-  STRIPE_SECRET_KEY: secret().refine((key) => key.startsWith("sk_test_"), {
-    message: "Only Stripe test-mode keys are permitted",
-  }),
+  STRIPE_SECRET_KEY: secret(),
+  PAYMENTS_LIVE_MODE_ENABLED: z.enum(["true", "false"]).default("false"),
   ALLOWED_FRONTEND_ORIGINS: z
     .string()
     .min(1)
@@ -32,6 +31,16 @@ export const sellerEnvSchema = z.object({
   KAFKA_USERNAME: z.string().min(1),
   KAFKA_PASSWORD: z.string().min(1),
   KAFKA_TOPIC_PREFIX: z.string(),
+});
+
+export const sellerEnvSchema = baseSellerEnvSchema.superRefine((env, context) => {
+  if (env.PAYMENTS_LIVE_MODE_ENABLED === "false" && env.STRIPE_SECRET_KEY.startsWith("sk_live_")) {
+    context.addIssue({
+      code: "custom",
+      path: ["STRIPE_SECRET_KEY"],
+      message: "Live Stripe key requires PAYMENTS_LIVE_MODE_ENABLED=true",
+    });
+  }
 });
 
 export type SellerConfig = z.output<typeof sellerEnvSchema>;

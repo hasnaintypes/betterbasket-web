@@ -2,6 +2,7 @@ import "reflect-metadata";
 import type { Type } from "@nestjs/common";
 import { existsSync } from "node:fs";
 import { bootstrapService, loadConfig } from "@betterbasket/runtime";
+import { createLogger } from "@betterbasket/logger";
 import { sellerEnvSchema } from "./config";
 
 export async function bootstrap(overrideModule?: Type<unknown>) {
@@ -9,6 +10,9 @@ export async function bootstrap(overrideModule?: Type<unknown>) {
   if (existsSync(envFile)) process.loadEnvFile(envFile);
   else if (existsSync(".env")) process.loadEnvFile(".env");
   const config = loadConfig(sellerEnvSchema);
+  createLogger({ service: "seller-service" }).info(
+    `payments: ${config.PAYMENTS_LIVE_MODE_ENABLED === "true" ? "LIVE MODE" : "TEST MODE"}`,
+  );
   const AppModule = overrideModule ?? (await import("./app.module")).AppModule;
   return bootstrapService({
     module: AppModule,

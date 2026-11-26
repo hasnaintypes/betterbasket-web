@@ -1,10 +1,16 @@
-import { Injectable, NotFoundException, NotImplementedException } from "@nestjs/common";
+import {
+  Injectable,
+  NotFoundException,
+  NotImplementedException,
+  ServiceUnavailableException,
+} from "@nestjs/common";
 import { eq, and } from "drizzle-orm";
 import type { CreateOrderInput } from "@betterbasket/contracts";
 import { db } from "../db/client";
 import { orders } from "../db/schema";
 import { transitionSubOrder } from "./transition";
 import type { SubOrderStatus, TransitionActor } from "./state-machine";
+import { paymentsEnabled } from "../config";
 
 @Injectable()
 export class OrdersService {
@@ -20,6 +26,12 @@ export class OrdersService {
    * the real insert + publishes Topics.OrderCreated via @betterbasket/kafka-client.
    */
   async create(_buyerId: string, _input: CreateOrderInput): Promise<never> {
+    if (!paymentsEnabled()) {
+      throw new ServiceUnavailableException({
+        code: "PAYMENTS_DISABLED",
+        message: "Payments are currently unavailable",
+      });
+    }
     throw new NotImplementedException(
       "Order creation is not implemented yet: it needs product-service price resolution.",
     );

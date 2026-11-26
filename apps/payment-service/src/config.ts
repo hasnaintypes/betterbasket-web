@@ -11,6 +11,7 @@ const basePaymentEnvSchema = z.object({
   STRIPE_SECRET_KEY: secret(),
   STRIPE_ACCOUNT_WEBHOOK_SECRET: secret(),
   STRIPE_CONNECT_WEBHOOK_SECRET: secret(),
+  PAYMENTS_ENABLED: z.enum(["true", "false"]).optional(),
   PAYMENTS_LIVE_MODE_ENABLED: z.enum(["true", "false"]).default("false"),
   PLATFORM_FEE_BPS: z
     .string()
@@ -34,3 +35,10 @@ export const paymentEnvSchema = basePaymentEnvSchema.superRefine((env, context) 
 });
 
 export type PaymentConfig = z.output<typeof paymentEnvSchema>;
+
+export function paymentsEnabled(): boolean {
+  return (
+    process.env.PAYMENTS_ENABLED === "true" ||
+    (process.env.PAYMENTS_ENABLED === undefined && process.env.NODE_ENV === "test")
+  );
+}
