@@ -2,10 +2,14 @@ import { ConflictException, Injectable, NotFoundException } from "@nestjs/common
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
 import { randomUUID } from "node:crypto";
-import type { CreateProductInput, PaginationQuery } from "@betterbasket/contracts";
+import type { CreateProductInput } from "@betterbasket/contracts";
 import { ProductDocument, type ProductMongoDocument } from "./schemas/product.schema";
 import { isSellerSkuDuplicate, isSlugDuplicate, productSlug } from "./slug";
 import { assertKnownCategory } from "../categories/catalog";
+import type { CatalogQuery } from "./catalog-query";
+import { lowestVariantPrice } from "./pricing";
+
+const publicProjection = { version: 0, sellerStatus: 0, schemaVersion: 0, __v: 0 };
 
 @Injectable()
 export class ProductsService {
@@ -25,6 +29,7 @@ export class ProductsService {
           slug: productSlug(input.title),
           status: "draft",
           sellerStatus: "other",
+          minPrice: lowestVariantPrice(input.basePrice, variants),
           version: 0,
           schemaVersion: 2,
         });
@@ -38,18 +43,39 @@ export class ProductsService {
     throw new ConflictException("Could not allocate a unique product slug");
   }
 
-  async findPublished({ page, limit }: PaginationQuery, category?: string) {
-    const filter = {
-      status: "active" as const,
-      sellerStatus: "active" as const,
-      ...(category ? { category } : {}),
-    };
+  async findPublished(query: CatalogQuery) {
+    const { page, limit, category, minPrice, maxPrice, sellerId, q, sort } = query;
+    if (category) assertKnownCategory(category);
+    const filter: {
+      status: "active";
+      sellerStatus: "active";
+      category?: string;
+      sellerId?: string;
+      minPrice?: { $gte?: number; $lte?: number };
+      $text?: { $search: string };
+    } = { status: "active", sellerStatus: "active" };
+    if (category) filter.category = category;
+    if (sellerId) filter.sellerId = sellerId;
+    if (minPrice !== undefined || maxPrice !== undefined) {
+      filter.minPrice = {
+        ...(minPrice !== undefined ? { $gte: minPrice } : {}),
+        ...(maxPrice !== undefined ? { $lte: maxPrice } : {}),
+      };
+    }
+    if (q) filter.$text = { $search: q };
+    const sortOrder: Record<string, 1 | -1> =
+      sort === "newest"
+        ? { createdAt: -1 as const, _id: -1 as const }
+        : {
+            minPrice: (sort === "price_asc" ? 1 : -1) as 1 | -1,
+            _id: (sort === "price_asc" ? 1 : -1) as 1 | -1,
+          };
     const [items, total] = await Promise.all([
       this.productModel
-        .find(filter)
+        .find(filter, publicProjection)
         .skip((page - 1) * limit)
         .limit(limit)
-        .sort({ createdAt: -1 })
+        .sort(sortOrder)
         .lean(),
       this.productModel.countDocuments(filter),
     ]);
@@ -62,7 +88,7 @@ export class ProductsService {
 
   async findBySlug(slug: string) {
     const product = await this.productModel
-      .findOne({ slug, status: "active", sellerStatus: "active" })
+      .findOne({ slug, status: "active", sellerStatus: "active" }, publicProjection)
       .lean();
     if (!product) throw new NotFoundException(`Product '${slug}' not found`);
     return product;

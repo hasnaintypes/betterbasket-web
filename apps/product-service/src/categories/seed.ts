@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { CreateProductInputSchema } from "@betterbasket/contracts";
 import { categoryIds } from "./catalog";
+import { lowestVariantPrice } from "../products/pricing";
 
 export function assertSeedEnvironment(environment: string | undefined): void {
   if (environment !== "development" && environment !== "staging") {
@@ -58,6 +59,7 @@ export async function seedProducts(store: SeedStore, productCount: number, selle
           })),
           status: "draft",
           sellerStatus: "other",
+          minPrice: lowestVariantPrice(input.basePrice, input.variants),
           version: 0,
           schemaVersion: 2,
         },

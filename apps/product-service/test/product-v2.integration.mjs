@@ -36,8 +36,9 @@ function product(sellerId, slug, sku) {
     title: "Test Product",
     slug,
     description: "Plain text",
-    category: "test-category",
+    category: "clothing",
     basePrice: { amount: 100, currency: "USD" },
+    minPrice: 100,
     variants: [
       {
         variantId: variantId(),
@@ -69,7 +70,7 @@ test("storefront status, seller status and category query uses the compound inde
     .find({
       status: "active",
       sellerStatus: "active",
-      category: "test-category",
+      category: "clothing",
     })
     .sort({ createdAt: -1 })
     .hint("storefront_filter")

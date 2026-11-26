@@ -1,5 +1,24 @@
 # Product service data model
 
+## Public catalog queries
+
+`GET /products` accepts `category`, `minPrice`, `maxPrice`, `sellerId`, `q`,
+`sort=newest|price_asc|price_desc`, `page`, and `limit`. Prices are integer USD
+cents. Only active products from active sellers are returned. Unknown or
+operator-style query parameters return 400. The list and slug detail endpoints
+send `Cache-Control: public, max-age=30`; list and detail responses omit the
+internal `version`, `sellerStatus`, and `schemaVersion` fields. Text search uses
+the title/description text index. Sorting always includes `_id` to make ties
+stable. The `minPrice` field is the lowest variant price, or the base price
+when there are no variants; product update paths must recompute it when prices
+or variants change.
+
+Before enabling price filters on a database with existing products, run
+`pnpm --filter product-service db:migrate:min-price` with the service's normal
+validated database configuration. The idempotent migration fills missing
+`minPrice` values and creates the new price indexes. Back up the target
+database first. No local Docker service is required.
+
 ## Categories and synthetic data
 
 `GET /categories` is public and returns version 1 of the two-level taxonomy in

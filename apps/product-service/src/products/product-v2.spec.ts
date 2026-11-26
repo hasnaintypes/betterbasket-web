@@ -5,6 +5,7 @@ import { migrateProductV2 } from "./migration";
 import { ProductsService } from "./products.service";
 import { ProductDocument, ProductSchema } from "./schemas/product.schema";
 import { isSellerSkuDuplicate, isSlugDuplicate, productSlug } from "./slug";
+import { CatalogQuerySchema } from "./catalog-query";
 
 const sellerId = randomUUID();
 const input = {
@@ -66,6 +67,7 @@ describe("product v2 model", () => {
       ...input,
       sellerId,
       slug: "blue-shirt-abc123",
+      minPrice: 1999,
       variants: [{ ...input.variants[0], variantId: randomUUID(), stock: -1 }],
     });
     await expect(document.validate()).rejects.toThrow();
@@ -88,6 +90,7 @@ describe("product v2 model", () => {
     await expect(service.create(sellerId, input)).resolves.toEqual({ sellerId });
     expect(create).toHaveBeenCalledTimes(2);
     expect(create.mock.calls[0][0].sellerId).toBe(sellerId);
+    expect(create.mock.calls[0][0].minPrice).toBe(1999);
     expect(create.mock.calls[0][0]).not.toHaveProperty("organizationId");
     expect(create.mock.calls[0][0].variants[0].variantId).toMatch(/^[0-9a-f-]{36}$/);
     expect(create.mock.calls[0][0].variants[0].variantId).toBe(
@@ -104,18 +107,16 @@ describe("product v2 model", () => {
     const countDocuments = jest.fn().mockResolvedValue(0);
     const findOne = jest.fn().mockReturnValue({ lean: jest.fn().mockResolvedValue({ id: "p" }) });
     const service = new ProductsService({ find, countDocuments, findOne } as never);
-    await service.findPublished({ page: 1, limit: 20 }, "clothing");
-    expect(find).toHaveBeenCalledWith({
-      status: "active",
-      sellerStatus: "active",
-      category: "clothing",
-    });
+    await service.findPublished(CatalogQuerySchema.parse({ category: "clothing" }));
+    expect(find).toHaveBeenCalledWith(
+      { status: "active", sellerStatus: "active", category: "clothing" },
+      { version: 0, sellerStatus: 0, schemaVersion: 0, __v: 0 },
+    );
     await service.findBySlug("blue-shirt-abc123");
-    expect(findOne).toHaveBeenCalledWith({
-      slug: "blue-shirt-abc123",
-      status: "active",
-      sellerStatus: "active",
-    });
+    expect(findOne).toHaveBeenCalledWith(
+      { slug: "blue-shirt-abc123", status: "active", sellerStatus: "active" },
+      { version: 0, sellerStatus: 0, schemaVersion: 0, __v: 0 },
+    );
   });
 });
 
