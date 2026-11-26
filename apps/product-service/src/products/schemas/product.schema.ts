@@ -76,6 +76,9 @@ export class ProductDocument {
   @Prop({ type: moneySchema, required: true })
   basePrice!: MoneySubdocument;
 
+  @Prop({ required: true, min: 0, validate: Number.isInteger })
+  minPrice!: number;
+
   @Prop({
     type: [variantSchema],
     default: [],
@@ -123,3 +126,19 @@ ProductSchema.index(
 );
 ProductSchema.index({ title: "text", description: "text" });
 ProductSchema.index({ sellerId: 1, status: 1 });
+ProductSchema.index(
+  { status: 1, sellerStatus: 1, createdAt: -1, _id: -1 },
+  { name: "storefront_newest" },
+);
+ProductSchema.index(
+  { status: 1, sellerStatus: 1, category: 1, createdAt: -1, _id: -1 },
+  { name: "storefront_category_newest" },
+);
+ProductSchema.index(
+  { status: 1, sellerStatus: 1, minPrice: 1, _id: 1 },
+  { name: "storefront_price" },
+);
+ProductSchema.index(
+  { status: 1, sellerStatus: 1, category: 1, minPrice: 1, _id: 1 },
+  { name: "storefront_category_price" },
+);

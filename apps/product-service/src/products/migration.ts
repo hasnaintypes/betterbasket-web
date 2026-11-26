@@ -5,6 +5,7 @@ import {
   type CreateProductInput,
 } from "@betterbasket/contracts";
 import { productSlug } from "./slug";
+import { lowestVariantPrice } from "./pricing";
 
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -52,6 +53,7 @@ export function migrateProductV2(
     variants: input.variants.map((variant) => ({ ...variant, variantId: randomUUID() })),
     status,
     sellerStatus: "other" as const,
+    minPrice: lowestVariantPrice(input.basePrice, input.variants),
     version: 0,
     schemaVersion: 2,
   };
