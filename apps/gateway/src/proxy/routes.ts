@@ -18,6 +18,7 @@ export interface GatewayRoute {
 export const routes: readonly GatewayRoute[] = [
   { prefix: "/api/auth", target: "AUTH_SERVICE_URL", upstreamPrefix: "/api/auth" },
   { prefix: "/api/products", target: "PRODUCT_SERVICE_URL", upstreamPrefix: "/products" },
+  { prefix: "/api/categories", target: "PRODUCT_SERVICE_URL", upstreamPrefix: "/categories" },
   { prefix: "/api/sellers", target: "SELLER_SERVICE_URL", upstreamPrefix: "/sellers" },
   { prefix: "/api/orders", target: "ORDER_SERVICE_URL", upstreamPrefix: "/orders" },
   { prefix: "/api/payments", target: "PAYMENT_SERVICE_URL", upstreamPrefix: "/payments" },
