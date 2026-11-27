@@ -26,3 +26,11 @@ routes through the gateway. Account actions require that public origin to be
 configured. Form inputs use strict shared Zod schemas. The email-verification
 result page refreshes the session created by verification and links to the
 account. If the session is unavailable, it offers a sign-in link.
+
+Run `pnpm --filter web test:e2e:auth` with `AUTH_E2E_ADMIN_DATABASE_URL` set to
+a nonproduction PostgreSQL connection that can create and drop databases. The
+runner starts the local gateway and auth service, creates and migrates a random
+disposable database, then drops it after the run. It uses synthetic accounts
+and local secrets only; Chrome must be installed at `/usr/bin/google-chrome` or
+supplied through `PLAYWRIGHT_CHROME_PATH`. The runner also checks the auth
+pages for serious and critical accessibility violations.
