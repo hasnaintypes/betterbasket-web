@@ -8,7 +8,8 @@
     "start": "next start -p 3000",
     "lint": "eslint . --max-warnings=0",
     "type-check": "tsc --noEmit",
-    "test": "node --test scripts/*.test.mjs"
+    "test": "node --test scripts/*.test.mjs",
+    "test:e2e:auth": "node --test e2e/auth.e2e.mjs"
   },
   "dependencies": {
     "@betterbasket/auth-shared": "workspace:*",
@@ -23,6 +24,7 @@
   },
   "devDependencies": {
     "@betterbasket/config": "workspace:*",
+    "@playwright/test": "1.65.0",
     "@tailwindcss/postcss": "^4.0.0",
     "@types/node": "^22.7.4",
     "@types/react": "^19.0.0",
