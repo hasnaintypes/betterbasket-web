@@ -9,7 +9,9 @@
     "lint": "eslint . --max-warnings=0",
     "type-check": "tsc --noEmit",
     "test": "node --test scripts/*.test.mjs && tsx --test scripts/*.test.tsx",
-    "test:e2e:catalog": "playwright test -c playwright.catalog.config.mjs"
+    "test:e2e:catalog": "playwright test -c playwright.catalog.config.mjs",
+    "test:e2e:catalog:seeded": "node --test e2e/catalog.seeded.e2e.mjs",
+    "test:e2e:auth": "node --test e2e/auth.e2e.mjs"
   },
   "dependencies": {
     "@betterbasket/api-client": "workspace:*",
