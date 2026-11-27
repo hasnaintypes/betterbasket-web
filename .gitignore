@@ -24,6 +24,8 @@ pnpm-debug.log*
 
 # Testing
 coverage/
+test-results/
+playwright-report/
 
 # Editor / OS
 .vscode/*

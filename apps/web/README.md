@@ -1,5 +1,28 @@
 # Storefront app
 
+## Browse pages
+
+`/` shows categories and new arrivals; `/products` supports category, price,
+seller, search, sort, and pagination filters in the URL. The pages fetch public
+catalog data through the gateway with `@betterbasket/api-client` and 60-second
+revalidation. They show loading, empty, and recoverable error states. Product
+images use ImageKit when available; other image hosts are not loaded. Set
+`NEXT_PUBLIC_SITE_URL` to the storefront origin for canonical metadata, and
+`NEXT_PUBLIC_API_URL` to the gateway origin. The gateway forwards
+`/api/categories` to product-service.
+
+The browse journey needs seeded, visible products in a nonproduction catalog
+environment. Run the browser journey and record LCP before closing #76.
+`pnpm --filter web test:e2e:catalog` runs a local Playwright journey against a
+synthetic gateway stub and reports a local LCP sample. It uses the system
+Chrome when available; set `PLAYWRIGHT_CHROME_PATH` for a different executable
+or use a Playwright-installed Chromium. With `MONGODB_URI` set to a
+nonproduction MongoDB connection, `pnpm --filter web test:e2e:catalog:seeded`
+creates a random disposable database, seeds three visible products, checks
+category and price filters through the local product service in Chrome, then
+drops the database. Build product-service before running this test. Deployment
+journey and LCP evidence remains required.
+
 The storefront shell provides shared Query and session context, accessible
 loading and error states, and a report-only nonce-based Content Security Policy.
 Set `NEXT_PUBLIC_API_URL` to the gateway origin (`http://localhost:4000` for

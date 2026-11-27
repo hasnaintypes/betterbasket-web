@@ -122,6 +122,8 @@ describe("gateway HTTP route table", () => {
     try {
       await client.get("/api/products?x=1");
       expect(stub.requests[0]?.url).toBe("/products?x=1");
+      await client.get("/api/categories");
+      expect(stub.requests[1]?.url).toBe("/categories");
     } finally {
       await close();
     }

@@ -3,9 +3,8 @@ import { AppProviders } from "@betterbasket/ui/providers/app-providers";
 import { VerificationBanner } from "@/components/verification-banner";
 import "./globals.css";
 
-export const dynamic = "force-dynamic";
-
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
   title: "BetterBasket",
   description: "Shop from independent sellers on BetterBasket.",
 };
